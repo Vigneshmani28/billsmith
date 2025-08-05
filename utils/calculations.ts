@@ -1,14 +1,26 @@
 import type { InvoiceItem } from "../types/invoice"
 
-export const calculateTotals = (items: InvoiceItem[], taxRate: number | string) => {
+export const calculateTotals = (
+  items: InvoiceItem[],
+  taxRate: number | string,
+  discount: number | string
+) => {
   const subtotal = items.reduce((sum, item) => {
-    const amount = typeof item.amount === "number" ? item.amount : 0
-    return sum + amount
-  }, 0)
+    const amount = typeof item.amount === "number" ? item.amount : 0;
+    return sum + amount;
+  }, 0);
 
-  const rate = typeof taxRate === "number" ? taxRate : taxRate === "" ? 0 : Number(taxRate)
-  const tax_amount = (subtotal * rate) / 100
-  const total = subtotal + tax_amount
+  const rate = !isNaN(Number(taxRate)) ? Number(taxRate) : 0;
+  const discountValue = !isNaN(Number(discount)) ? Number(discount) : 0;
 
-  return { subtotal, tax_amount, total }
-}
+  const tax_amount = (subtotal * rate) / 100;
+  const totalBeforeDiscount = subtotal + tax_amount;
+  const total = totalBeforeDiscount - discountValue;
+
+  return {
+    subtotal,
+    tax_amount,
+    discount: discountValue,
+    total: total < 0 ? 0 : total
+  };
+};

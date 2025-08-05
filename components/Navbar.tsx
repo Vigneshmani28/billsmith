@@ -1,43 +1,50 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 export default function Navbar() {
   return (
-    <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
-      <Link 
-        href="/" 
-        className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent"
-      >
-        InvoiceApp
-      </Link>
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="block">
+            <div className="relative w-24 h-24">
+              <Image
+                src="/logo.png"
+                alt="BillSmith Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          </Link>
 
-      <div className="flex items-center gap-6">
-        {/* Show this only when signed in */}
-        <SignedIn>
+          {/* Right section */}
           <div className="flex items-center gap-4">
-            <div className="h-8 w-px bg-gray-200"></div>
-            <UserButton 
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  userButtonAvatarBox: "h-9 w-9",
-                  userButtonPopoverCard: "shadow-lg rounded-xl",
-                }
-              }}
-            />
-          </div>
-        </SignedIn>
+            <SignedIn>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "h-9 w-9",
+                    userButtonPopoverCard: "shadow-lg rounded-xl",
+                  },
+                }}
+              />
+            </SignedIn>
 
-        {/* Show Sign in button when signed out */}
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-medium hover:shadow-md transition-all hover:from-blue-600 hover:to-indigo-700 active:scale-95">
-              Sign In
-            </button>
-          </SignInButton>
-        </SignedOut>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="inline-flex items-center rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:from-blue-600 hover:to-indigo-700 focus:outline-none active:scale-95 transition">
+                  Sign In
+                </button>
+              </SignInButton>
+            </SignedOut>
+          </div>
+        </div>
       </div>
     </nav>
   );

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, MoreVertical } from "lucide-react";
+import { Plus, Trash2, MoreVertical, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -27,6 +27,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { generatePDF } from "@/utils/pdf-generator";
 
 interface InvoiceItem {
   id: string;
@@ -47,6 +48,7 @@ interface InvoiceData {
   to_email: string;
   items: InvoiceItem[];
   tax_rate: number;
+  discount: number;
   subtotal: number;
   tax_amount: number;
   total: number;
@@ -105,6 +107,7 @@ export default function HomePage() {
       setInvoiceToDelete(null);
     }
   };
+  
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
@@ -144,7 +147,7 @@ export default function HomePage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {invoices.map((inv) => (
-            <Card key={inv.id} className="relative">
+            <Card key={inv.id} className="relative border border-transparent hover:border-border hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 bg-background">
               <Link href={`/invoice/${inv.id}/edit`} className="block p-4 sm:p-6">
                 <CardHeader className="p-0 mb-3">
                   <div className="flex justify-between items-start">
@@ -180,6 +183,13 @@ export default function HomePage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenuItem
+                      onClick={() => generatePDF(inv)}
+                      className="cursor-pointer"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Invoice
+                    </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => handleDeleteClick(inv.id)}
                     disabled={deletingId === inv.id}
                     className="text-destructive focus:text-destructive cursor-pointer"
@@ -187,6 +197,7 @@ export default function HomePage() {
                     <Trash2 className="mr-2 h-4 w-4 text-destructive" /> {/* 👈 Add this class */}
                     Delete
                   </DropdownMenuItem>
+
                 </DropdownMenuContent>
 
               </DropdownMenu>

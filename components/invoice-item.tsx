@@ -90,7 +90,7 @@ export default function InvoiceItem({
       <div className="col-span-2">
         <Label>Amount</Label>
         <div className="h-10 px-3 py-2 bg-gray-50 border rounded-md flex items-center">
-          ${typeof item.amount === "number" ? item.amount.toFixed(2) : "0.00"}
+          &#8377;{typeof item.amount === "number" ? item.amount.toFixed(2) : "0.00"}
         </div>
       </div>
       <div className="col-span-1 flex items-end">

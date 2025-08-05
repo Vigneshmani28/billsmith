@@ -1,124 +1,343 @@
 import { jsPDF } from "jspdf";
 import { InvoiceData } from "@/types/invoice";
+import autoTable from "jspdf-autotable";
 
 export const generatePDF = (invoice: InvoiceData) => {
-  const doc = new jsPDF();
-  let y = 20;
-
-  // Header
-  doc.setFontSize(20);
-  doc.text("Your Company Name", 20, y);
-  doc.setFontSize(12);
-  doc.text("123 Main Street, City, Country", 20, y + 6);
-  doc.text("Email: contact@example.com | Phone: +1234567890", 20, y + 12);
-  doc.setFontSize(24);
-  doc.text("INVOICE", 150, y, { align: "right" });
-
-  y += 30;
-
-  // Invoice Info
-  doc.setFontSize(12);
-  doc.text(`Invoice #: ${invoice.invoice_number}`, 150, y, { align: "right" });
-  doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`, 150, y + 6, { align: "right" });
-
-  // From/To section
-  y += 20;
-  doc.setFontSize(14);
-  doc.text("Bill From", 20, y);
-  doc.text("Bill To", 110, y);
-  y += 8;
-  doc.setFontSize(10);
-  doc.text(`${invoice.from_name}\n${invoice.from_email}`, 20, y);
-  doc.text(`${invoice.to_name}\n${invoice.to_email}`, 110, y);
-
-  y += 20;
-
-  // Items Table Header
-  doc.setFontSize(10);
-  doc.setDrawColor(0);
-  doc.setFillColor(230, 230, 230);
-  doc.rect(20, y, 170, 8, "F");
-  doc.text("Description", 22, y + 6);
-  doc.text("Qty", 110, y + 6);
-  doc.text("Rate", 130, y + 6);
-  doc.text("Amount", 160, y + 6);
-
-  y += 10;
-
-  // Items
-  invoice.items.forEach((item) => {
-    doc.text(item.description, 22, y);
-    doc.text(item.quantity.toString(), 110, y);
-    doc.text(`$${Number(item.rate).toFixed(2)}`, 130, y);
-    doc.text(`$${item.amount.toFixed(2)}`, 160, y);
-    y += 8;
-  });
-
-  // Totals + Bank info side by side
-  y += 10;
-  doc.line(20, y, 190, y);
-  y += 10;
-
-  // Left: Bank Info
-  doc.setFontSize(12);
-  doc.text("Bank Account Details", 20, y);
-  doc.setFontSize(10);
-  y += 6;
-  doc.text("Account Name: Your Company", 20, y);
-  doc.text("Bank Name: ABC Bank", 20, y + 6);
-  doc.text("A/C No: 123456789", 20, y + 12);
-  doc.text("IFSC: ABCD0123456", 20, y + 18);
-
-  // Right: Totals
-  y -= 6;
-  doc.text("Subtotal:", 140, y);
-  doc.text(`$${invoice.subtotal.toFixed(2)}`, 170, y, { align: "right" });
-  doc.text(`Tax (${invoice.tax_rate}%):`, 140, y + 6);
-  doc.text(`$${invoice.tax_amount.toFixed(2)}`, 170, y + 6, { align: "right" });
-  doc.setFontSize(12);
-  doc.text("Total:", 140, y + 14);
-  doc.text(`$${invoice.total.toFixed(2)}`, 170, y + 14, { align: "right" });
-
-  y += 30;
-
-  // Services Grid (3x3)
-  doc.setDrawColor(150);
-  doc.roundedRect(20, y, 170, 40, 3, 3);
-  doc.setFontSize(11);
-  const services = [
-    "Web Development", "SEO Optimization", "UI/UX Design",
-    "Consulting", "Support", "Cloud Hosting",
-    "Marketing", "Security Audit", "Analytics",
-  ];
-  let gridX = 25;
-  let gridY = y + 10;
-  services.forEach((srv, i) => {
-    doc.text(srv, gridX, gridY);
-    gridX += 55;
-    if ((i + 1) % 3 === 0) {
-      gridX = 25;
-      gridY += 10;
+  function chunkArray<T>(arr: T[], size: number): T[][] {
+    const result: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+      result.push(arr.slice(i, i + size));
     }
+    return result;
+  }
+
+  const doc = new jsPDF();
+  const itemsPerPage = 5;
+  const itemChunks = chunkArray(invoice.items, itemsPerPage);
+
+  // Function to add header content
+  const addHeader = (y: number) => {
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Naresh Kumar M", 20, y);
+
+    doc.setFontSize(11);
+    doc.text("PAN - AUQPN2096R", 20, y + 6);
+    doc.setFont("Helvetica", "normal");
+    doc.text("Office Branches - Guduvancheri / MWC Chengalpattu", 20, y + 12);
+
+    // Right-aligned Head Office info
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Head Office :", 200, y, { align: "right" });
+
+    doc.setFont("Helvetica", "normal");
+    doc.text("Door No -836,", 200, y + 6, { align: "right" });
+    doc.text("25th Street, B.V.Colony, Vyasarpadi,", 200, y + 12, { align: "right" });
+    doc.text("Chennai - 600039.", 200, y + 18, { align: "right" });
+
+    // Yellow strip with "INVOICE"
+    y += 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const stripHeight = 12;
+
+    const leftStripWidth = pageWidth * 0.65;
+    const gapWidth = pageWidth * 0.20;
+    const rightStripWidth = pageWidth * 0.15;
+
+    doc.setFillColor(255, 204, 0);
+    doc.rect(0, y, leftStripWidth, stripHeight, "F");
+    doc.rect(leftStripWidth + gapWidth, y, rightStripWidth, stripHeight, "F");
+
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(28);
+    doc.setTextColor(0);
+    const textX = leftStripWidth + gapWidth / 2;
+    doc.text("INVOICE", textX, y + 9.5, { align: "center" });
+
+    y += 20;
+
+    // Invoice To
+    doc.setFontSize(12);
+    doc.setFont("Helvetica", "bold");
+    doc.text("Invoice to:", 20, y);
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`${invoice.to_name}`, 20, y + 6);
+    doc.text(`${invoice.to_email}`, 20, y + 10);
+
+    // Invoice Meta
+    doc.setFontSize(10);
+    doc.setFont("Helvetica", "bold");
+    doc.text("Invoice Number :", 150, y, { align: "right" });
+    doc.text(`#${invoice.invoice_number}`, 190, y, { align: "right" });
+    doc.text("Invoice Date :", 150, y + 6, { align: "right" });
+    doc.setFont("Helvetica", "bold");
+    doc.text(`${invoice.date}`, 190, y + 6, { align: "right" });
+
+    return y + 10;
+  };
+
+  // Function to add payment info and totals side by side
+  const addPaymentAndTotals = (y: number, isLastPage: boolean) => {
+    // === Left side: Payment Info ===
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Payment Info:", 20, y);
+
+    // Set base font
+    doc.setFontSize(10);
+    doc.setFont("Helvetica", "normal");
+
+    // Payment Info details
+    doc.setFont("Helvetica", "bold");
+    doc.text("Account :", 20, y + 6);
+    doc.setFont("Helvetica", "normal");
+    doc.text("0912101062689", 50, y + 6);
+
+    doc.setFont("Helvetica", "bold");
+    doc.text("A/C Name :", 20, y + 12);
+    doc.setFont("Helvetica", "normal");
+    doc.text("NARESH KUMAR M", 50, y + 12);
+
+    doc.setFont("Helvetica", "bold");
+    doc.text("Bank Details :", 20, y + 18);
+    doc.setFont("Helvetica", "normal");
+    doc.text("CANARA BANK", 50, y + 18);
+
+    doc.setFont("Helvetica", "bold");
+    doc.text("IFSC Code :", 20, y + 24);
+    doc.setFont("Helvetica", "normal");
+    doc.setTextColor(0);
+    doc.text("CNRB0000912", 50, y + 24);
+
+    // === Right side: Totals (only on last page) ===
+    if (isLastPage) {
+      let currentY = y;
+
+      // Subtotal
+      doc.setFont("Helvetica", "bold");
+      doc.text("Sub Total :", 150, currentY, { align: "right" });
+      doc.text(`${invoice.subtotal.toLocaleString()}`, 190, currentY, { align: "right" });
+      currentY += 6;
+
+      // Discount (conditionally render)
+      if (Number(invoice.discount) !== 0) {
+        doc.setFont("Helvetica", "bold");
+        doc.text("Discount :", 150, currentY, { align: "right" });
+        doc.text(`-${Number(invoice.discount).toLocaleString()}`, 190, currentY, { align: "right" });
+        currentY += 6;
+      }
+
+      // Yellow Tax Strip
+      doc.setFillColor(255, 204, 0);
+      doc.rect(130, currentY - 4, 70, 8, "F");
+      doc.setTextColor(0);
+      doc.setFont("Helvetica", "bold");
+      doc.text("Tax :", 150, currentY + 2, { align: "right" });
+      doc.text(`${invoice.tax_rate}%`, 190, currentY + 2, { align: "right" });
+
+      currentY += 12;
+
+      // Total
+      doc.setFontSize(13);
+      doc.setFont("Helvetica", "bold");
+      doc.text("Total :", 150, currentY, { align: "right" });
+      doc.text(`${invoice.total.toLocaleString()}`, 190, currentY, { align: "right" });
+    }
+
+    return y + 30;
+  };
+
+  // Function to add services section
+  const addServices = (y: number) => {
+    doc.setFontSize(11);
+    doc.setFont("Helvetica", "bold");
+    doc.text("Accounting Tax & Other Services:", 20, y);
+
+    // Box setup
+    const boxX = 20;
+    const boxY = y + 4;
+    const boxW = 170;
+    const boxH = 46;
+    const paddingX = 6;
+    const paddingY = 6;
+
+    doc.setDrawColor(60);
+    doc.roundedRect(boxX, boxY, boxW, boxH, 4, 4);
+
+    // Grid columns and bullet styling
+    const bullet = "•";
+    const fontSize = 9;
+    const col1X = boxX + paddingX + 5;
+    const col2X = boxX + boxW / 3 + 2;
+    const col3X = boxX + (boxW / 3) * 2 + 2;
+    let rowY = boxY + paddingY + 4;
+
+    // Set font for items
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(fontSize);
+
+    // Services array
+    const services = [
+      ["Accounting", "Income Tax Returns", "GEM Registration"],
+      ["Auditing", "TDS Returns", "GST Registration"],
+      ["Tax Audit", "ROC Compliances", "MSME Registration"],
+      ["PAN / TAN", "Financial Consultancy", "Firm Registration"],
+      ["Food License", "ISO Certification", "Company Registration"],
+      ["GST Returns", "ISO Audit", "Other Services"],
+    ];
+
+    // Draw services with bullets
+    services.forEach((row) => {
+      doc.text(`${bullet}`, col1X - 4, rowY);
+      doc.text(row[0], col1X, rowY);
+
+      doc.text(`${bullet}`, col2X - 4, rowY);
+      doc.text(row[1], col2X, rowY);
+
+      doc.text(`${bullet}`, col3X - 4, rowY);
+      doc.text(row[2], col3X, rowY);
+
+      rowY += 6;
+    });
+
+    return rowY + 12;
+  };
+
+  // Function to add footer content
+  const addFooter = (y: number, isLastPage: boolean = false, currentPage: number, totalPages: number) => {
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const stripHeightValue = 1;
+    const stripY = y;
+
+    // Yellow line across full width
+    doc.setFillColor(255, 204, 0);
+    doc.rect(0, stripY, pageWidth, stripHeightValue, "F");
+
+    // Footer content spacing
+    const footerY = stripY + 10;
+    const colWidth = pageWidth / 3;
+
+    // === Column 1: Contact Info ===
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("+91 9566135117", 10, footerY);
+
+    doc.setFont("Helvetica", "italic");
+    doc.setFontSize(9);
+    doc.text("vyasarnaresh@gmail.com", 10, footerY + 5);
+
+    // === Column 2: Quotes (centered) ===
+    doc.setFont("Helvetica", "italic");
+    doc.setTextColor(0, 51, 153);
+    doc.setFontSize(10);
+    doc.text(
+      `"A day without laughter is a day wasted."\n"Be with Smiley face" | "Help the needy."`,
+      pageWidth / 2,
+      footerY,
+      { align: "center" }
+    );
+
+    // === Column 3: Thank You Section ===
+    doc.setFont("Helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.text("Thank you for your business.", pageWidth - 10, footerY, {
+      align: "right",
+    });
+
+    doc.setFont("Helvetica", "bold");
+    doc.text("Terms & Conditions -", pageWidth - 10, footerY + 5, {
+      align: "right",
+    });
+
+    doc.setFont("Helvetica", "normal");
+    doc.text("30 DAYS Credit from date of invoice.", pageWidth - 10, footerY + 10, {
+      align: "right",
+    });
+
+    // === Vertical Separators ===
+    doc.setDrawColor(100);
+    doc.setLineWidth(0.2);
+
+    // Line after 1st column
+    doc.line(colWidth, stripY + 4, colWidth, footerY + 10);
+
+    // Line after 2nd column
+    doc.line(colWidth * 2, stripY + 4, colWidth * 2, footerY + 10);
+
+      doc.setFont("Helvetica", "italic");
+      doc.setFontSize(9);
+      doc.text(`Page ${currentPage} of ${totalPages}`, pageWidth / 2, footerY + 20, { align: "center" });
+  };
+
+  // Process each page
+  itemChunks.forEach((chunk, index) => {
+    if (index > 0) {
+      doc.addPage();
+    }
+
+    let y = 20;
+    y = addHeader(y);
+
+    // Add items table
+    autoTable(doc, {
+      startY: y + 15,
+      head: [[
+        { content: "SL.", styles: { halign: 'center' } },
+        { content: "Item Description", styles: { halign: 'left' } },
+        { content: "Price", styles: { halign: 'center' } },
+        { content: "Qty", styles: { halign: 'center' } },
+        { content: "Total", styles: { halign: 'center' } }
+      ]],
+      body: chunk.map((item, i) => [
+        { content: (i + 1 + (index * itemsPerPage)).toString().padStart(2, "0"), styles: { halign: 'center' } },
+        { content: item.description, styles: { halign: 'left' } },
+        { content: `${Number(item.rate).toLocaleString()}`, styles: { halign: 'center' } },
+        { content: item.quantity.toString(), styles: { halign: 'center' } },
+        { content: `${Number(item.amount).toLocaleString()}`, styles: { halign: 'center' } }
+      ]),
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [56, 57, 69],
+        textColor: 255,
+        fontStyle: 'bold',
+        lineWidth: 0.1,
+        cellPadding: { top: 5, bottom: 5, left: 3, right: 3 },
+        minCellHeight: 12,
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'center' },
+        1: { cellWidth: 'wrap', halign: 'left' },
+        2: { cellWidth: 'auto', halign: 'center' },
+        3: { cellWidth: 'auto', halign: 'center' },
+        4: { cellWidth: 'auto', halign: 'center' }
+      },
+      bodyStyles: {
+        valign: 'middle',
+        lineWidth: 0.1,
+      },
+    });
+
+    // Calculate positions for remaining sections
+    const tableHeight = chunk.length * 10 + 30; // Approximate table height
+    let currentY = y + 15 + tableHeight;
+
+    // Add payment info and totals (side by side)
+    currentY = addPaymentAndTotals(currentY, index === itemChunks.length - 1);
+
+    // Add services section
+    currentY = addServices(currentY);
+
+    // Add footer
+    addFooter(currentY, index === itemChunks.length - 1, index + 1, itemChunks.length);
   });
 
-  y += 50;
-
-  // Footer: Thank you note
-  doc.setFontSize(12);
-  doc.text("Thank you for your business!", 105, y, { align: "center" });
-
-  y += 10;
-
-  // Terms & Conditions
-  doc.setFontSize(10);
-  doc.text("Terms & Conditions", 20, y);
-  doc.setFontSize(9);
-  doc.text(
-    "Payment is due within 15 days. Late payments may incur a fee.\nPlease contact us for any queries related to this invoice.",
-    20,
-    y + 6
-  );
-
-  // Save
+  // Save PDF
   doc.save(`invoice-${invoice.invoice_number}.pdf`);
 };

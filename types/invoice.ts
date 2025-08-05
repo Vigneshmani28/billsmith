@@ -16,6 +16,7 @@ export interface InvoiceData {
   to_email: string;
   items: InvoiceItem[];
   tax_rate: number | string;
+  discount: number | string;
   subtotal: number;
   tax_amount: number;
   total: number;

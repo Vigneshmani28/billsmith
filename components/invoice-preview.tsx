@@ -40,6 +40,7 @@ export default function InvoicePreview({ onBack, id }: InvoicePreviewProps) {
       to_email: invoice.to_email,
       items: invoice.items,
       tax_rate: invoice.tax_rate,
+      discount: invoice.discount,
       subtotal: invoice.subtotal,
       tax_amount: invoice.tax_amount,
       total: invoice.total,
@@ -72,7 +73,7 @@ export default function InvoicePreview({ onBack, id }: InvoicePreviewProps) {
               Download PDF
             </Button>
             {!id && (
-              <Button onClick={handleSaveInvoice}>
+              <Button onClick={handleSaveInvoice} disabled={!invoice.items.length || !invoice.to_name || !invoice.from_name}>
               <Save className="w-4 h-4 mr-2" />
               Save Invoice
             </Button>
@@ -125,10 +126,10 @@ export default function InvoicePreview({ onBack, id }: InvoicePreviewProps) {
                     <td className="py-2">{item.description}</td>
                     <td className="py-2 text-center">{item.quantity}</td>
                     <td className="py-2 text-right">
-                      ${typeof item.rate === "number" ? item.rate.toFixed(2) : "0.00"}
+                      &#8377;{typeof item.rate === "number" ? item.rate.toFixed(2) : "0.00"}
                     </td>
                     <td className="py-2 text-right">
-                      ${typeof item.amount === "number" ? item.amount.toFixed(2) : "0.00"}
+                      &#8377;{typeof item.amount === "number" ? item.amount.toFixed(2) : "0.00"}
                     </td>
                   </tr>
                 ))}
@@ -140,17 +141,23 @@ export default function InvoicePreview({ onBack, id }: InvoicePreviewProps) {
               <div className="w-64 space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>${invoice.subtotal.toFixed(2)}</span>
+                  <span>&#8377;{invoice.subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>
                     Tax ({typeof invoice.tax_rate === "number" ? invoice.tax_rate : 0}%):
                   </span>
-                  <span>${invoice.tax_amount.toFixed(2)}</span>
+                  <span>&#8377;{invoice.tax_amount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>
+                    Discount :
+                  </span>
+                  <span>- &#8377;{invoice.discount}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total:</span>
-                  <span>${invoice.total.toFixed(2)}</span>
+                  <span>&#8377;{invoice.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

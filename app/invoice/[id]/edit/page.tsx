@@ -51,6 +51,7 @@ export default function EditInvoicePage() {
           tax_rate: data.tax_rate,
           subtotal: data.subtotal,
           tax_amount: data.tax_amount,
+          discount: data.discount,
           total: data.total,
         });
       }

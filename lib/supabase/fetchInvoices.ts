@@ -20,6 +20,7 @@ interface InvoiceData {
   to_email: string;
   items: InvoiceItem[];
   tax_rate: number;
+  discount: number;
   subtotal: number;
   tax_amount: number;
   total: number;

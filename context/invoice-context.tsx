@@ -39,14 +39,16 @@ export function InvoiceProvider({
 
   // ✅ Setter to fully override invoice
   const setFullInvoice = (data: InvoiceData) => {
-    const { subtotal, tax_amount, total } = calculateTotals(
+    const { subtotal, tax_amount, discount, total } = calculateTotals(
       data.items,
-      data.tax_rate
+      data.tax_rate,
+      data.discount
     );
     setInvoice({
       ...data,
       subtotal,
       tax_amount,
+      discount,
       total,
     });
   };
@@ -54,15 +56,17 @@ export function InvoiceProvider({
   const updateInvoice = (updates: Partial<InvoiceData>) => {
   const merged = { ...invoice, ...updates };
 
-  const { subtotal, tax_amount, total } = calculateTotals(
+  const { subtotal, tax_amount, discount, total } = calculateTotals(
     merged.items,
-    merged.tax_rate
+    merged.tax_rate,
+    merged.discount
   );
 
   setInvoice({
     ...merged,
     subtotal,
     tax_amount,
+    discount,
     total,
   });
 };

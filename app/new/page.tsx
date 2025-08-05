@@ -4,16 +4,27 @@ import InvoiceForm from "@/components/invoice-form";
 import InvoicePreview from "@/components/invoice-preview";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { FullPageLoader } from "@/components/loader";
+import { useInvoice } from "@/context/invoice-context";
+import { initialInvoiceData } from "@/lib/constants";
 
 export default function NewInvoicePage() {
   const [showPreview, setShowPreview] = useState(false);
   const { userId, isLoaded } = useAuth();
   const router = useRouter();
+  const {setFullInvoice} = useInvoice();
 
-  if (!isLoaded) return <p>Loading...</p>;
+  useEffect(() => {
+    if(isLoaded && userId) {
+      console.log("setting initial invoice data");
+      setFullInvoice(initialInvoiceData)
+    }
+  }, [isLoaded, userId])
+
+  if (!isLoaded) return <FullPageLoader />;
   if (!userId) {
     router.push("/sign-in");
     return null;
