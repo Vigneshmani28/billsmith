@@ -1,21 +1,25 @@
+// camelCase used in UI
 export interface InvoiceItem {
-  id: string
-  description: string
-  quantity: number | string
-  rate: number | string
-  amount: number
+  id: string;
+  description: string;
+  quantity: number | string;
+  rate: number | string;
+  amount: number;
 }
 
 export interface InvoiceData {
-  invoiceNumber: string
-  date: string
-  fromName: string
-  fromEmail: string
-  toName: string
-  toEmail: string
-  items: InvoiceItem[]
-  taxRate: number | string
-  subtotal: number
-  taxAmount: number
-  total: number
+  invoice_number: string;
+  date: string;
+  from_name: string;
+  from_email: string;
+  to_name: string;
+  to_email: string;
+  items: InvoiceItem[];
+  tax_rate: number | string;
+  subtotal: number;
+  tax_amount: number;
+  total: number;
+  user_id?:string
+  id?:string
+  created_at?: string;
 }

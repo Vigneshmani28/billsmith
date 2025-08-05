@@ -9,18 +9,19 @@ export default function BasicDetails() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invoice Details</CardTitle>
+        <CardTitle className="text-lg md:text-xl">Invoice Details</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="invoiceNumber">Invoice Number</Label>
           <Input
-            value={invoice.invoiceNumber}
-            onChange={(e) => updateInvoice({ invoiceNumber: e.target.value })}
+            value={invoice.invoice_number}
+            onChange={(e) => updateInvoice({ invoice_number: e.target.value })}
             id="invoiceNumber"
+            placeholder="e.g. INV-001"
           />
         </div>
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="date">Date</Label>
           <Input
             id="date"

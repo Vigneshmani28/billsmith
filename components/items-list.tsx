@@ -9,9 +9,9 @@ export default function ItemsList() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Invoice Items</CardTitle>
-        <Button onClick={addItem} size="sm">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <CardTitle className="text-lg md:text-xl">Invoice Items</CardTitle>
+        <Button onClick={addItem} size="sm" variant="secondary">
           <Plus className="w-4 h-4 mr-2" />
           Add Item
         </Button>

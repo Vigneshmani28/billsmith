@@ -1,15 +1,15 @@
 import type { InvoiceData } from "../types/invoice"
 
 export const initialInvoiceData: InvoiceData = {
-  invoiceNumber: `INV-${Date.now()}`,
+  invoice_number: `INV-${Date.now()}`,
   date: new Date().toISOString().split("T")[0],
-  fromName: "",
-  fromEmail: "",
-  toName: "",
-  toEmail: "",
+  from_name: "",
+  from_email: "",
+  to_name: "",
+  to_email: "",
   items: [{ id: "1", description: "", quantity: 1, rate: 0, amount: 0 }, ],
-  taxRate: 10,
+  tax_rate: 10,
   subtotal: 0,
-  taxAmount: 0,
+  tax_amount: 0,
   total: 0,
 }

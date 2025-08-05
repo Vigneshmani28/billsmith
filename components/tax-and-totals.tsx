@@ -7,31 +7,29 @@ export default function TaxAndTotals() {
   const { invoice, updateInvoice } = useInvoice();
 
   const handleTaxRateChange = (value: string) => {
-    // Allow empty string temporarily
     if (value === "") {
-      updateInvoice({ taxRate: "" });
+      updateInvoice({ tax_rate: "" });
     } else {
       const numValue = Number.parseFloat(value);
       if (!isNaN(numValue) && numValue >= 0 && numValue <= 100) {
-        updateInvoice({ taxRate: numValue });
+        updateInvoice({ tax_rate: numValue });
       }
     }
   };
 
   const handleTaxRateBlur = () => {
-    // If empty on blur, set to 0
-    if (invoice.taxRate === "" || isNaN(Number(invoice.taxRate))) {
-      updateInvoice({ taxRate: 0 });
+    if (invoice.tax_rate === "" || isNaN(Number(invoice.tax_rate))) {
+      updateInvoice({ tax_rate: 0 });
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tax & Totals</CardTitle>
+        <CardTitle className="text-lg md:text-xl">Tax & Totals</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="taxRate">Tax Rate (%)</Label>
           <Input
             id="taxRate"
@@ -39,24 +37,24 @@ export default function TaxAndTotals() {
             min="0"
             max="100"
             step="0.01"
-            value={invoice.taxRate}
+            value={invoice.tax_rate}
             onChange={(e) => handleTaxRateChange(e.target.value)}
             onBlur={handleTaxRateBlur}
           />
         </div>
-        <div className="space-y-2">
+
+        <div className="space-y-2 text-sm border-t md:border-none pt-4 md:pt-0">
           <div className="flex justify-between">
-            <span>Subtotal:</span>
+            <span className="text-muted-foreground">Subtotal:</span>
             <span>${invoice.subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
-            <span>
-              Tax ({typeof invoice.taxRate === "number" ? invoice.taxRate : 0}
-              %):
+            <span className="text-muted-foreground">
+              Tax ({typeof invoice.tax_rate === "number" ? invoice.tax_rate : 0}%):
             </span>
-            <span>${invoice.taxAmount.toFixed(2)}</span>
+            <span>${invoice.tax_amount.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between font-bold text-lg border-t pt-2">
+          <div className="flex justify-between font-semibold text-base border-t pt-2">
             <span>Total:</span>
             <span>${invoice.total.toFixed(2)}</span>
           </div>

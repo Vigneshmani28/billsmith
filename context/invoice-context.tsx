@@ -3,7 +3,13 @@
 import { initialInvoiceData } from "@/lib/constants";
 import { InvoiceData, InvoiceItem } from "@/types/invoice";
 import { calculateTotals } from "@/utils/calculations";
-import { createContext, ReactNode, useContext, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 interface InvoiceContextType {
   invoice: InvoiceData;
@@ -15,28 +21,52 @@ interface InvoiceContextType {
     field: keyof InvoiceItem,
     value: string | number
   ) => void;
+  setFullInvoice: (data: InvoiceData) => void;
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
 
-export function InvoiceProvider({ children }: { children: ReactNode }) {
-  const [invoice, setInvoice] = useState<InvoiceData>(initialInvoiceData);
+export function InvoiceProvider({
+  children,
+  initialData,
+}: {
+  children: ReactNode;
+  initialData?: InvoiceData;
+}) {
+  const [invoice, setInvoice] = useState<InvoiceData>(
+    initialData || initialInvoiceData
+  );
+
+  // ✅ Setter to fully override invoice
+  const setFullInvoice = (data: InvoiceData) => {
+    const { subtotal, tax_amount, total } = calculateTotals(
+      data.items,
+      data.tax_rate
+    );
+    setInvoice({
+      ...data,
+      subtotal,
+      tax_amount,
+      total,
+    });
+  };
 
   const updateInvoice = (updates: Partial<InvoiceData>) => {
-    const newInvoice = { ...invoice, ...updates };
+  const merged = { ...invoice, ...updates };
 
-    if (updates.items || updates.taxRate !== undefined) {
-      const { subtotal, taxAmount, total } = calculateTotals(
-        updates.items || invoice.items,
-        updates.taxRate !== undefined ? updates.taxRate : invoice.taxRate
-      );
-      newInvoice.subtotal = subtotal;
-      newInvoice.taxAmount = taxAmount;
-      newInvoice.total = total;
-    }
+  const { subtotal, tax_amount, total } = calculateTotals(
+    merged.items,
+    merged.tax_rate
+  );
 
-    setInvoice(newInvoice);
-  };
+  setInvoice({
+    ...merged,
+    subtotal,
+    tax_amount,
+    total,
+  });
+};
+
 
   const addItem = () => {
     const newItem: InvoiceItem = {
@@ -65,23 +95,8 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     newItems[index] = { ...newItems[index], [field]: value };
 
     if (field === "quantity" || field === "rate") {
-      const quantityValue = newItems[index].quantity;
-      const rateValue = newItems[index].rate;
-
-      let quantity: number;
-      if (typeof quantityValue === "string") {
-        quantity = quantityValue === "" ? 0 : Number(quantityValue);
-      } else {
-        quantity = quantityValue;
-      }
-
-      let rate: number;
-      if (typeof rateValue === "string") {
-        rate = rateValue === "" ? 0 : Number(rateValue);
-      } else {
-        rate = rateValue;
-      }
-
+      const quantity = Number(newItems[index].quantity || 0);
+      const rate = Number(newItems[index].rate || 0);
       newItems[index].amount = quantity * rate;
     }
 
@@ -90,7 +105,14 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   return (
     <InvoiceContext.Provider
-      value={{ invoice, updateInvoice, addItem, removeItem, updateItem }}
+      value={{
+        invoice,
+        updateInvoice,
+        addItem,
+        removeItem,
+        updateItem,
+        setFullInvoice,
+      }}
     >
       {children}
     </InvoiceContext.Provider>

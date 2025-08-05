@@ -5,7 +5,7 @@ import TaxAndTotals from "./tax-and-totals";
 
 export default function InvoiceForm() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6 pb-10 max-w-4xl mx-auto">
       <BasicDetails />
       <ContactDetails />
       <ItemsList />
