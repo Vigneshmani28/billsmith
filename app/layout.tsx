@@ -20,7 +20,30 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BillSmith",
   description: "Create, manage, and save invoices effortlessly",
+  openGraph: {
+    title: "BillSmith",
+    description: "Create, manage, and save invoices effortlessly",
+    url: "https://billsmith.vercel.app",
+    siteName: "BillSmith",
+    images: [
+      {
+        url: "/preview-logo.png", // This should exist in /public
+        width: 1200,
+        height: 630,
+        alt: "BillSmith Invoice App",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BillSmith",
+    description: "Create, manage, and save invoices effortlessly",
+    images: ["/preview-logo.png"],
+  },
 };
+
 
 export default function RootLayout({
   children,
