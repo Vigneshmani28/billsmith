@@ -22,6 +22,14 @@ export default function Navbar() {
             </div>
           </Link>
 
+          {/* Development Mode Badge - Center */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-500 text-black">
+              DEVELOPMENT MODE
+            </span>
+            <span className="h-2 w-2 rounded-full bg-green-500 animate-ping"></span>
+          </div>
+
           {/* Right section */}
           <div className="flex items-center gap-4">
             <SignedIn>
