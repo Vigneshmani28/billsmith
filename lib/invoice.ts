@@ -10,6 +10,7 @@ export async function saveInvoice(userId: string, invoice: InvoiceData) {
     from_email: invoice.from_email,
     to_name: invoice.to_name,
     to_email: invoice.to_email,
+    to_address: invoice.to_address,
     items: invoice.items,
     tax_rate: invoice.tax_rate,
     discount: invoice.discount,

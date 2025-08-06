@@ -25,6 +25,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -33,6 +39,7 @@ import {
 import { generatePDF } from "@/utils/pdf-generator";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/lib/hooks/use-debounce";
+import { StatusWidgets } from "@/components/StatusWidgets";
 
 interface InvoiceItem {
   id: string;
@@ -51,6 +58,8 @@ interface InvoiceData {
   from_email: string;
   to_name: string;
   to_email: string;
+  to_address: string;
+  status: string;
   items: InvoiceItem[];
   tax_rate: number;
   discount: number;
@@ -143,6 +152,32 @@ export default function HomePage() {
       inv.to_name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
+  const statusCounts = invoices.reduce(
+  (acc, invoice) => {
+    const status = invoice.status.toLowerCase();
+    if (status === "paid") acc.paid += 1;
+    else if (status === "unpaid") acc.unpaid += 1;
+    else if (status === "partial") acc.partial += 1;
+    else if (status === "overdue") acc.overdue += 1;
+    return acc;
+  },
+  { paid: 0, unpaid: 0, partial: 0, overdue: 0 }
+);
+
+
+  const getVariant = (status: string) => {
+    switch (status) {
+      case "paid":
+        return "paid";
+      case "partial":
+        return "partial";
+      case "overdue":
+        return "overdue";
+      default:
+        return "unpaid";
+    }
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
@@ -163,38 +198,54 @@ export default function HomePage() {
       </div>
 
       <div className="mb-10 relative w-full max-w-sm">
-  {/* Search icon */}
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        {/* Search icon */}
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
 
-  {/* Input */}
-  <Input
-    ref={inputRef}
-    placeholder="Search by client or invoice number"
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-    className="pl-10 pr-20"
+        {/* Input */}
+        <Input
+          ref={inputRef}
+          placeholder="Search by client or invoice number"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 pr-20"
+        />
+
+        {/* Shortcut hint */}
+        <Badge
+          variant="outline"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none"
+        >
+          /
+        </Badge>
+
+        {/* Clear button */}
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm("")}
+            className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+            aria-label="Clear search"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+        <Accordion type="single" collapsible className="mb-6">
+        <AccordionItem value="status-widgets">
+          <AccordionTrigger className="text-base font-medium">
+            Status Summary
+          </AccordionTrigger>
+          <AccordionContent
+  className="transition-all duration-300 will-change-[height] overflow-hidden"
+>
+  <StatusWidgets
+    stats={{ ...statusCounts, total: invoices.length }}
+    className="mt-4"
   />
+</AccordionContent>
 
-  {/* Shortcut hint */}
-  <Badge
-    variant="outline"
-    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none"
-  >
-    /
-  </Badge>
-
-  {/* Clear button */}
-  {searchTerm && (
-    <button
-      onClick={() => setSearchTerm("")}
-      className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
-      aria-label="Clear search"
-    >
-      <X className="w-4 h-4" />
-    </button>
-  )}
-</div>
-
+        </AccordionItem>
+      </Accordion>
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -227,14 +278,26 @@ export default function HomePage() {
               >
                 <CardHeader className="p-0 mb-3">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">
-                      {inv.invoice_number}
-                    </CardTitle>
+                    {/* Left: Invoice Number and Status */}
+                    <div>
+                      <CardTitle className="text-lg">
+                        #{inv.invoice_number}
+                      </CardTitle>
+                      <Badge
+                        variant={getVariant(inv.status)}
+                        className="text-xs capitalize mt-1"
+                      >
+                        {inv.status}
+                      </Badge>
+                    </div>
+
+                    {/* Right: Total */}
                     <Badge variant="secondary" className="text-sm">
                       ₹{inv.total.toFixed(2)}
                     </Badge>
                   </div>
                 </CardHeader>
+
                 <CardContent className="p-0 text-sm text-muted-foreground space-y-1.5">
                   <div className="flex gap-2">
                     <span className="font-medium">Date:</span>

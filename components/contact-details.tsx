@@ -56,6 +56,16 @@ export default function ContactDetails() {
               type="email"
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="toEmail">Address</Label>
+            <Input
+              id="toAddress"
+              value={invoice.to_address}
+              onChange={(e) => updateInvoice({ to_address: e.target.value })}
+              placeholder="client address"
+              type="text"
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

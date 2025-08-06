@@ -57,14 +57,44 @@ export const generatePDF = (invoice: InvoiceData) => {
 
     y += 20;
 
-    // Invoice To
-    doc.setFontSize(12);
-    doc.setFont("Helvetica", "bold");
-    doc.text("Invoice to:", 20, y);
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`${invoice.to_name}`, 20, y + 6);
-    doc.text(`${invoice.to_email}`, 20, y + 10);
+  // Invoice To
+doc.setFontSize(12);
+doc.setFont("Helvetica", "bold");
+doc.text("Invoice to:", 20, y);
+
+doc.setFont("Helvetica", "normal");
+doc.setFontSize(10);
+
+let offsetY = y + 6;
+
+// Optional: to_name
+if (invoice.to_name) {
+  doc.text(invoice.to_name, 20, offsetY);
+  offsetY += 4;
+}
+
+// Optional: to_email
+if (invoice.to_email) {
+  doc.text(invoice.to_email, 20, offsetY);
+  offsetY += 4;
+}
+
+// Optional: to_address split by last comma
+if (invoice.to_address) {
+  const parts = invoice.to_address.split(",").map(p => p.trim());
+  if (parts.length > 1) {
+    const last = parts.pop(); // Pincode or last item
+    const line1 = parts.join(", ");
+    doc.text(line1, 20, offsetY);
+    offsetY += 4;
+    doc.text(String(last), 20, offsetY);
+    offsetY += 4;
+  } else {
+    doc.text(invoice.to_address, 20, offsetY);
+    offsetY += 4;
+  }
+}
+
 
     // Invoice Meta
     doc.setFontSize(10);
@@ -278,7 +308,7 @@ export const generatePDF = (invoice: InvoiceData) => {
       doc.addPage();
     }
 
-    let y = 20;
+    let y = 22;
     y = addHeader(y);
 
     // Add items table

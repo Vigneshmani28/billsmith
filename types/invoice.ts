@@ -14,6 +14,8 @@ export interface InvoiceData {
   from_email: string;
   to_name: string;
   to_email: string;
+  to_address : string;
+  status: string;
   items: InvoiceItem[];
   tax_rate: number | string;
   discount: number | string;
@@ -23,4 +25,12 @@ export interface InvoiceData {
   user_id?:string
   id?:string
   created_at?: string;
+}
+
+
+export enum InvoiceStatus {
+  PAID = "paid",
+  UNPAID = "unpaid",
+  PARTIAL = "partial",
+  OVERDUE = "overdue",
 }

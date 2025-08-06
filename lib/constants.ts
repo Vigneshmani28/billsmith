@@ -7,6 +7,8 @@ export const initialInvoiceData: InvoiceData = {
   from_email: "",
   to_name: "",
   to_email: "",
+  to_address: "",
+  status: "unpaid",
   items: [{ id: "1", description: "", quantity: 1, rate: 0, amount: 0 },],
   tax_rate: 0,
   subtotal: 0,

@@ -9,9 +9,16 @@ import InvoicePreview from "@/components/invoice-preview";
 import { Eye, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchInvoiceById, updateInvoiceInDB } from "@/lib/supabase/fetchInvoices";
-import { InvoiceData } from "@/types/invoice";
+import { InvoiceData, InvoiceStatus } from "@/types/invoice";
 import { toast } from "sonner";
 import { FullPageLoader } from "@/components/loader";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function EditInvoicePage() {
   const { id } = useParams();
@@ -47,6 +54,8 @@ export default function EditInvoicePage() {
           from_email: data.from_email,
           to_name: data.to_name,
           to_email: data.to_email,
+          to_address: data.to_address,
+          status: data.status,
           items: data.items,
           tax_rate: data.tax_rate,
           subtotal: data.subtotal,
@@ -94,22 +103,47 @@ export default function EditInvoicePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Edit Invoice</h1>
-            <p className="text-gray-600">Update and save your invoice</p>
-          </div>
-          <div className="space-x-2">
-            <Button variant="outline" onClick={() => setShowPreview((prev) => !prev)}>
-              <Eye className="w-4 h-4 mr-2" />
-              {showPreview ? "Back to Edit" : "Preview"}
-            </Button>
-            <Button onClick={handleSave}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        </div>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+  <div>
+    <h1 className="text-2xl font-bold">Edit Invoice</h1>
+    <p className="text-gray-600">Update and save your invoice</p>
+  </div>
+
+  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+    {/* Invoice Status Dropdown */}
+    <div className="min-w-[160px]">
+      <Select
+        value={invoice.status}
+        onValueChange={(value: InvoiceStatus) =>
+          setFullInvoice({ ...invoice, status: value })
+        }
+      >
+        <SelectTrigger className="w-full border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-sm">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+
+        <SelectContent>
+          {Object.values(InvoiceStatus).map((status) => (
+            <SelectItem key={status} value={status}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Buttons */}
+    <Button variant="outline" onClick={() => setShowPreview((prev) => !prev)}>
+      <Eye className="w-4 h-4 mr-2" />
+      {showPreview ? "Back to Edit" : "Preview"}
+    </Button>
+    <Button onClick={handleSave}>
+      <Save className="w-4 h-4 mr-2" />
+      Save Changes
+    </Button>
+  </div>
+</div>
+
 
         {showPreview ? (
           <InvoicePreview onBack={() => setShowPreview(false)} id={id as string} />

@@ -18,6 +18,8 @@ interface InvoiceData {
   from_email: string;
   to_name: string;
   to_email: string;
+  to_address: string;
+  status: string;
   items: InvoiceItem[];
   tax_rate: number;
   discount: number;
