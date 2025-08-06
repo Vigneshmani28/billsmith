@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import {
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, MoreVertical, Download, Search } from "lucide-react";
+import { Plus, Trash2, MoreVertical, Download, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -71,7 +71,25 @@ export default function HomePage() {
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 0);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const active = document.activeElement;
+      const isTyping =
+        active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+      if (isTyping) return;
+
+      if (e.key === "/") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -144,15 +162,39 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <div className="mb-10 relative w-full sm:w-64">
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="mb-10 relative w-full max-w-sm">
+  {/* Search icon */}
+  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+
+  {/* Input */}
   <Input
-    placeholder="Search by client name or invoice number"
+    ref={inputRef}
+    placeholder="Search by client or invoice number"
     value={searchTerm}
     onChange={(e) => setSearchTerm(e.target.value)}
-    className="pl-10"
+    className="pl-10 pr-20"
   />
+
+  {/* Shortcut hint */}
+  <Badge
+    variant="outline"
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none"
+  >
+    /
+  </Badge>
+
+  {/* Clear button */}
+  {searchTerm && (
+    <button
+      onClick={() => setSearchTerm("")}
+      className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+      aria-label="Clear search"
+    >
+      <X className="w-4 h-4" />
+    </button>
+  )}
 </div>
+
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -169,7 +211,7 @@ export default function HomePage() {
       ) : filteredInvoices.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-12 sm:mt-20 gap-4">
           <div className="text-center text-muted-foreground text-base sm:text-lg">
-            No invoices match your search.
+            No invoices found.
           </div>
         </div>
       ) : (

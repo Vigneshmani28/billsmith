@@ -62,23 +62,39 @@ export default function InvoicePreview({ onBack, id }: InvoicePreviewProps) {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Invoice Preview</h1>
-          <div className="space-x-2">
-            {!id && (
-              <Button variant="outline" onClick={onBack}>
-                Back to Edit
-              </Button>
-            )}
-            <Button onClick={handleDownloadPDF}>
-              <Download className="w-4 h-4 mr-2" />
-              Download PDF
-            </Button>
-            {!id && (
-              <Button onClick={handleSaveInvoice} disabled={!invoice.items.length || !invoice.to_name || !invoice.from_name}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Invoice
-            </Button>
-            )}
-          </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:items-center">
+  {!id && (
+    <Button
+      variant="outline"
+      onClick={onBack}
+      className="w-full sm:w-auto"
+    >
+      Back to Edit
+    </Button>
+  )}
+  <Button
+    onClick={handleDownloadPDF}
+    className="w-full sm:w-auto"
+  >
+    <Download className="w-4 h-4 mr-2" />
+    Download PDF
+  </Button>
+  {!id && (
+    <Button
+      onClick={handleSaveInvoice}
+      disabled={
+        !invoice.items.length ||
+        !invoice.to_name ||
+        !invoice.from_name
+      }
+      className="w-full sm:w-auto"
+    >
+      <Save className="w-4 h-4 mr-2" />
+      Save Invoice
+    </Button>
+  )}
+</div>
+
         </div>
 
         <Card>
