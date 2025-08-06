@@ -153,11 +153,11 @@ export const generatePDF = (invoice: InvoiceData) => {
   const addServices = (y: number) => {
     doc.setFontSize(11);
     doc.setFont("Helvetica", "bold");
-    doc.text("Accounting Tax & Other Services:", 20, y);
+    doc.text("Accounting Tax & Other Services:", 20, y+4);
 
     // Box setup
     const boxX = 20;
-    const boxY = y + 4;
+    const boxY = y + 8;
     const boxW = 170;
     const boxH = 46;
     const paddingX = 6;
