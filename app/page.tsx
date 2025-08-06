@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { fetchUserInvoices, deleteInvoiceFromDB } from "@/lib/supabase/fetchInvoices";
+import {
+  fetchUserInvoices,
+  deleteInvoiceFromDB,
+} from "@/lib/supabase/fetchInvoices";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, MoreVertical, Download } from "lucide-react";
+import { Plus, Trash2, MoreVertical, Download, Search } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -28,6 +31,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { generatePDF } from "@/utils/pdf-generator";
+import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/lib/hooks/use-debounce";
 
 interface InvoiceItem {
   id: string;
@@ -58,11 +63,15 @@ interface InvoiceData {
 export default function HomePage() {
   const { userId, isLoaded } = useAuth();
   const router = useRouter();
+
   const [invoices, setInvoices] = useState<InvoiceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 0);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -107,13 +116,22 @@ export default function HomePage() {
       setInvoiceToDelete(null);
     }
   };
-  
+
+  const filteredInvoices = invoices.filter(
+    (inv) =>
+      inv.invoice_number
+        .toLowerCase()
+        .includes(debouncedSearchTerm.toLowerCase()) ||
+      inv.to_name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+  );
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Your Invoices</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Your Invoices
+          </h1>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             View, edit, and manage all your saved invoices.
           </p>
@@ -125,6 +143,16 @@ export default function HomePage() {
           </Button>
         </Link>
       </div>
+
+      <div className="mb-10 relative w-full sm:w-64">
+  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+  <Input
+    placeholder="Search by client name or invoice number"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="pl-10"
+  />
+</div>
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -138,20 +166,28 @@ export default function HomePage() {
             </Card>
           ))}
         </div>
-      ) : invoices.length === 0 ? (
+      ) : filteredInvoices.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-12 sm:mt-20 gap-4">
           <div className="text-center text-muted-foreground text-base sm:text-lg">
-            No invoices found. Create your first invoice to get started.
+            No invoices match your search.
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {invoices.map((inv) => (
-            <Card key={inv.id} className="relative border border-transparent hover:border-border hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 bg-background">
-              <Link href={`/invoice/${inv.id}/edit`} className="block p-4 sm:p-6">
+          {filteredInvoices.map((inv) => (
+            <Card
+              key={inv.id}
+              className="relative border border-transparent hover:border-border hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 bg-background"
+            >
+              <Link
+                href={`/invoice/${inv.id}/edit`}
+                className="block p-4 sm:p-6"
+              >
                 <CardHeader className="p-0 mb-3">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{inv.invoice_number}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {inv.invoice_number}
+                    </CardTitle>
                     <Badge variant="secondary" className="text-sm">
                       ₹{inv.total.toFixed(2)}
                     </Badge>
@@ -164,12 +200,13 @@ export default function HomePage() {
                   </div>
                   <div className="flex gap-2">
                     <span className="font-medium">Client:</span>
-                    <span className="truncate max-w-[120px]">{inv.to_name}</span>
+                    <span className="truncate max-w-[120px]">
+                      {inv.to_name}
+                    </span>
                   </div>
                 </CardContent>
               </Link>
 
-              {/* Dropdown menu for more actions */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -181,25 +218,26 @@ export default function HomePage() {
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuContent
+                  align="end"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <DropdownMenuItem
-                      onClick={() => generatePDF(inv)}
-                      className="cursor-pointer"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Invoice
-                    </DropdownMenuItem>
+                    onClick={() => generatePDF(inv)}
+                    className="cursor-pointer"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Invoice
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleDeleteClick(inv.id)}
                     disabled={deletingId === inv.id}
                     className="text-destructive focus:text-destructive cursor-pointer"
                   >
-                    <Trash2 className="mr-2 h-4 w-4 text-destructive" /> {/* 👈 Add this class */}
+                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
                     Delete
                   </DropdownMenuItem>
-
                 </DropdownMenuContent>
-
               </DropdownMenu>
             </Card>
           ))}
@@ -212,11 +250,14 @@ export default function HomePage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the invoice and remove all its data.
+              This action cannot be undone. This will permanently delete the
+              invoice and remove all its data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingId !== null}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletingId !== null}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={deletingId !== null}
