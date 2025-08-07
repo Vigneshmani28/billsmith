@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import {
   fetchUserInvoices,
@@ -71,6 +71,7 @@ interface InvoiceData {
 
 export default function HomePage() {
   const { userId, isLoaded } = useAuth();
+  const { user, isSignedIn } = useUser();
   const router = useRouter();
 
   const [invoices, setInvoices] = useState<InvoiceData[]>([]);
@@ -182,9 +183,9 @@ export default function HomePage() {
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Your Invoices
-          </h1>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+           Welcome Back {user?.firstName || "User"} !
+          </h2>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             View, edit, and manage all your saved invoices.
           </p>
