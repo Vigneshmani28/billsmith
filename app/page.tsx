@@ -27,9 +27,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { AlertCircle, DollarSign, FileText, IndianRupee, TrendingUp } from "lucide-react";
+import {
+  AlertCircle,
+  DollarSign,
+  FileText,
+  IndianRupee,
+  TrendingUp,
+} from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
-
+import MemoizedPieChart from "@/components/charts/PieChart";
+import MemoizedBarChart from "@/components/charts/BarChart";
+import MemoizedLineChart from "@/components/charts/LineChart";
 interface InvoiceItem {
   id: string;
   description: string;
@@ -207,61 +215,63 @@ const Dashboard = () => {
           {/* Key Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <StatsCard
-  title="Total Invoices"
-  value={invoices.length}
-  subtitle="All time invoices"
-  icon={<FileText className="h-5 w-5" />}
-/>
+              title="Total Invoices"
+              value={invoices.length}
+              subtitle="All time invoices"
+              icon={<FileText className="h-5 w-5" />}
+            />
 
-<StatsCard
-  title="Total Revenue"
-  value={
-    "₹" +
-    totalRevenue.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
-  subtitle="From paid invoices"
-  icon={<IndianRupee className="h-5 w-5" />}
-/>
+            <StatsCard
+              title="Total Revenue"
+              value={
+                "₹" +
+                totalRevenue.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }
+              subtitle="From paid invoices"
+              icon={<IndianRupee className="h-5 w-5" />}
+            />
 
-<StatsCard
-  title="Total Partial Revenue"
-  value={
-    "₹" +
-    partialPaidAmount.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
-  subtitle="From partial invoices"
-  icon={<IndianRupee className="h-5 w-5" />}
-/>
+            <StatsCard
+              title="Total Partial Revenue"
+              value={
+                "₹" +
+                partialPaidAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }
+              subtitle="From partial invoices"
+              icon={<IndianRupee className="h-5 w-5" />}
+            />
 
-<StatsCard
-  title="Outstanding"
-  value={
-    "₹" +
-    outstandingAmount.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
-  subtitle="Unpaid/overdue invoices"
-  icon={<AlertCircle className="h-5 w-5" />}
-/>
+            <StatsCard
+              title="Outstanding"
+              value={
+                "₹" +
+                outstandingAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }
+              subtitle="Unpaid/overdue invoices"
+              icon={<AlertCircle className="h-5 w-5" />}
+            />
 
-<StatsCard
-  title="Paid Rate"
-  value={
-    invoices.length > 0
-      ? `${Math.round((statusCounts.paid / invoices.length) * 100)}%`
-      : "0%"
-  }
-  subtitle="Percentage of paid invoices"
-  icon={<TrendingUp className="h-5 w-5" />}
-/>
+            <StatsCard
+              title="Paid Rate"
+              value={
+                invoices.length > 0
+                  ? `${Math.round(
+                      (statusCounts.paid / invoices.length) * 100
+                    )}%`
+                  : "0%"
+              }
+              subtitle="Percentage of paid invoices"
+              icon={<TrendingUp className="h-5 w-5" />}
+            />
           </div>
 
           {/* Main Charts Section */}
@@ -272,39 +282,7 @@ const Dashboard = () => {
                 <CardTitle>Invoice Status Distribution</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
-                {statusData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name}: ${(Number(percent) * 100).toFixed(0)}%`
-                        }
-                      >
-                        {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value: number) => [
-                          `${value} invoices`,
-                          "Count",
-                        ]}
-                      />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-gray-500">
-                    No invoice data available
-                  </div>
-                )}
+                <MemoizedPieChart data={statusData} />
               </CardContent>
             </Card>
 
@@ -314,53 +292,7 @@ const Dashboard = () => {
                 <CardTitle>Monthly Invoice Status</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
-                {monthlyChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={monthlyChartData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis
-                        dataKey="month"
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar
-                        dataKey="paid"
-                        stackId="a"
-                        fill={COLORS.paid}
-                        name="Paid"
-                      />
-                      <Bar
-                        dataKey="partial"
-                        stackId="a"
-                        fill={COLORS.partial}
-                        name="Partial"
-                      />
-                      <Bar
-                        dataKey="unpaid"
-                        stackId="a"
-                        fill={COLORS.unpaid}
-                        name="Unpaid"
-                      />
-                      <Bar
-                        dataKey="overdue"
-                        stackId="a"
-                        fill={COLORS.overdue}
-                        name="Overdue"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-gray-500">
-                    No monthly data available
-                  </div>
-                )}
+                <MemoizedBarChart data={monthlyChartData} />
               </CardContent>
             </Card>
           </div>
@@ -371,45 +303,9 @@ const Dashboard = () => {
               <CardTitle>Revenue Trend (Paid Invoices)</CardTitle>
             </CardHeader>
             <CardContent className="h-80">
-              {monthlyChartData.filter((m) => m.revenue > 0).length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={monthlyChartData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis
-                      dataKey="month"
-                      angle={-45}
-                      textAnchor="end"
-                      height={60}
-                    />
-                    <YAxis />
-                    <Tooltip
-                      formatter={(value: number) => [
-                        `₹${value.toLocaleString()}`,
-                        "Revenue",
-                      ]}
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#3B82F6"
-                      strokeWidth={2}
-                      activeDot={{ r: 8 }}
-                      name="Revenue"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex h-full items-center justify-center text-gray-500">
-                  No revenue data available
-                </div>
-              )}
+              <MemoizedLineChart data={monthlyChartData} />
             </CardContent>
           </Card>
-
           {/* Recent Invoices Table */}
           <Card>
             <CardHeader>
@@ -434,10 +330,7 @@ const Dashboard = () => {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <div className="font-semibold">
-                            ${invoice.total.toFixed(2)}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            Due {format(new Date(invoice.date), "MMM dd")}
+                            ₹{invoice.total.toFixed(2)}
                           </div>
                         </div>
                         <Badge

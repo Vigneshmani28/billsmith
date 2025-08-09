@@ -49,7 +49,7 @@ export function AppSidebar() {
           </span>
 
           {/* Text hidden in collapsed mode */}
-          <span className="group-data-[state=collapsed]:hidden">BillSmith</span>
+          <span className="group-data-[state=collapsed]:hidden">Billsmith</span>
         </div>
       </SidebarHeader>
 
