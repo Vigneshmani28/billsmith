@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { fetchInvoiceById, updateInvoiceInDB } from "@/lib/supabase/fetchInvoices";
 import { InvoiceData, InvoiceStatus } from "@/types/invoice";
 import { toast } from "sonner";
-import { FullPageLoader } from "@/components/loader";
+import { ContentLoader } from "@/components/loader";
 import {
   Select,
   SelectContent,
@@ -98,10 +98,10 @@ export default function EditInvoicePage() {
 }, []);
 
 
-  if (!isLoaded || loading) return <FullPageLoader />;
+  if (!isLoaded || loading) return <ContentLoader />;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
   <div>

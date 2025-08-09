@@ -7,6 +7,12 @@ import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
 import Footer from "@/components/Footer";
 
+// shadcn/ui sidebar imports
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import AuthLayout from "@/components/AuthLayout";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -47,9 +53,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider>
       <html lang="en">
@@ -62,10 +66,7 @@ export default function RootLayout({
               backgroundSize: "20px 20px",
             }}
           >
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Toaster position="top-right" />
-            <Footer />
+            <AuthLayout>{children}</AuthLayout>
           </body>
         </InvoiceProvider>
       </html>

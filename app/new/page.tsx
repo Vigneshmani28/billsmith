@@ -7,7 +7,7 @@ import { Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { FullPageLoader } from "@/components/loader";
+import { ContentLoader } from "@/components/loader";
 import { useInvoice } from "@/context/invoice-context";
 import { initialInvoiceData } from "@/lib/constants";
 
@@ -24,7 +24,7 @@ export default function NewInvoicePage() {
     }
   }, [isLoaded, userId])
 
-  if (!isLoaded) return <FullPageLoader />;
+  if (!isLoaded) return <ContentLoader />;
   if (!userId) {
     router.push("/sign-in");
     return null;
@@ -35,7 +35,7 @@ export default function NewInvoicePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
