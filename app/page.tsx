@@ -213,65 +213,66 @@ const Dashboard = () => {
       ) : (
         <>
           {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-2 sm:px-4">
-  <StatsCard
-    title="Total Invoices"
-    value={invoices.length}
-    subtitle="All time invoices"
-    icon={<FileText className="h-5 w-5" />}
-  />
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-2 sm:px-4">
+            <StatsCard
+              title="Total Invoices"
+              value={invoices.length}
+              subtitle="All time invoices"
+              icon={<FileText className="h-5 w-5" />}
+            />
 
-  <StatsCard
-    title="Total Revenue"
-    value={
-      "₹" +
-      totalRevenue.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-    }
-    subtitle="From paid invoices"
-    icon={<IndianRupee className="h-5 w-5" />}
-  />
+            <StatsCard
+              title="Total Revenue"
+              value={
+                "₹" +
+                totalRevenue.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }
+              subtitle="From paid invoices"
+              icon={<IndianRupee className="h-5 w-5" />}
+            />
 
-  <StatsCard
-    title="Total Partial Revenue"
-    value={
-      "₹" +
-      partialPaidAmount.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-    }
-    subtitle="From partial invoices"
-    icon={<IndianRupee className="h-5 w-5" />}
-  />
+            <StatsCard
+              title="Total Partial Revenue"
+              value={
+                "₹" +
+                partialPaidAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }
+              subtitle="From partial invoices"
+              icon={<IndianRupee className="h-5 w-5" />}
+            />
 
-  <StatsCard
-    title="Outstanding"
-    value={
-      "₹" +
-      outstandingAmount.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-    }
-    subtitle="Unpaid/overdue invoices"
-    icon={<AlertCircle className="h-5 w-5" />}
-  />
+            <StatsCard
+              title="Outstanding"
+              value={
+                "₹" +
+                outstandingAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }
+              subtitle="Unpaid/overdue invoices"
+              icon={<AlertCircle className="h-5 w-5" />}
+            />
 
-  <StatsCard
-    title="Paid Rate"
-    value={
-      invoices.length > 0
-        ? `${Math.round((statusCounts.paid / invoices.length) * 100)}%`
-        : "0%"
-    }
-    subtitle="Percentage of paid invoices"
-    icon={<TrendingUp className="h-5 w-5" />}
-  />
-</div>
-
+            <StatsCard
+              title="Paid Rate"
+              value={
+                invoices.length > 0
+                  ? `${Math.round(
+                      (statusCounts.paid / invoices.length) * 100
+                    )}%`
+                  : "0%"
+              }
+              subtitle="Percentage of paid invoices"
+              icon={<TrendingUp className="h-5 w-5" />}
+            />
+          </div>
 
           {/* Main Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
