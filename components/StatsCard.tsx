@@ -21,7 +21,7 @@ export function StatsCard({ title, value, subtitle, icon }: StatsCardProps) {
           {icon}
         </div>
       </CardHeader>
-      <CardContent className="pt-3 px-3 sm:px-4">
+      <CardContent className="px-3 sm:px-4">
         <div className="text-lg sm:text-xl font-bold text-indigo-900 dark:text-indigo-100 leading-tight break-words whitespace-normal">
           {value}
         </div>
