@@ -77,7 +77,7 @@ export default function InvoiceItem({
         />
       </div>
       <div className="col-span-2">
-        <Label>Rate ($)</Label>
+        <Label>Rate (₹)</Label>
         <Input
           type="number"
           min="0"
@@ -93,7 +93,7 @@ export default function InvoiceItem({
           &#8377;{typeof item.amount === "number" ? item.amount.toFixed(2) : "0.00"}
         </div>
       </div>
-      <div className="col-span-1 flex items-end">
+      <div className="col-span-1 flex items-end cursor-pointer">
         <Button
           variant="outline"
           size="icon"
