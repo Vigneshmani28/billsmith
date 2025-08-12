@@ -217,8 +217,8 @@ export default function InvoicePreview({ onBack, id }: InvoicePreviewProps) {
                   </span>
                 </div>
                 <div className="flex justify-between bg-yellow-300 font-semibold px-2 py-1 rounded">
-                  <span>Tax:</span>
-                  <span>{invoice.tax_rate}%</span>
+                  <span>Tax: ({invoice.tax_rate}%)</span>
+                  <span>&#8377;{invoice.tax_amount}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total:</span>

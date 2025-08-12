@@ -33,7 +33,9 @@ export const generatePDF = (invoice: InvoiceData) => {
 
     doc.setFont("Helvetica", "normal");
     doc.text("Door No -836,", 200, y + 6, { align: "right" });
-    doc.text("25th Street, B.V.Colony, Vyasarpadi,", 200, y + 12, { align: "right" });
+    doc.text("25th Street, B.V.Colony, Vyasarpadi,", 200, y + 12, {
+      align: "right",
+    });
     doc.text("Chennai - 600039.", 200, y + 18, { align: "right" });
 
     // Yellow strip with "INVOICE"
@@ -42,7 +44,7 @@ export const generatePDF = (invoice: InvoiceData) => {
     const stripHeight = 12;
 
     const leftStripWidth = pageWidth * 0.65;
-    const gapWidth = pageWidth * 0.20;
+    const gapWidth = pageWidth * 0.2;
     const rightStripWidth = pageWidth * 0.15;
 
     doc.setFillColor(255, 204, 0);
@@ -57,44 +59,43 @@ export const generatePDF = (invoice: InvoiceData) => {
 
     y += 20;
 
-  // Invoice To
-doc.setFontSize(12);
-doc.setFont("Helvetica", "bold");
-doc.text("Invoice to:", 20, y);
+    // Invoice To
+    doc.setFontSize(12);
+    doc.setFont("Helvetica", "bold");
+    doc.text("Invoice to:", 20, y);
 
-doc.setFont("Helvetica", "normal");
-doc.setFontSize(10);
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
 
-let offsetY = y + 6;
+    let offsetY = y + 6;
 
-// Optional: to_name
-if (invoice.to_name) {
-  doc.text(invoice.to_name, 20, offsetY);
-  offsetY += 4;
-}
+    // Optional: to_name
+    if (invoice.to_name) {
+      doc.text(invoice.to_name, 20, offsetY);
+      offsetY += 4;
+    }
 
-// Optional: to_email
-if (invoice.to_email) {
-  doc.text(invoice.to_email, 20, offsetY);
-  offsetY += 4;
-}
+    // Optional: to_email
+    if (invoice.to_email) {
+      doc.text(invoice.to_email, 20, offsetY);
+      offsetY += 4;
+    }
 
-// Optional: to_address split by last comma
-if (invoice.to_address) {
-  const parts = invoice.to_address.split(",").map(p => p.trim());
-  if (parts.length > 1) {
-    const last = parts.pop(); // Pincode or last item
-    const line1 = parts.join(", ");
-    doc.text(line1, 20, offsetY);
-    offsetY += 4;
-    doc.text(String(last), 20, offsetY);
-    offsetY += 4;
-  } else {
-    doc.text(invoice.to_address, 20, offsetY);
-    offsetY += 4;
-  }
-}
-
+    // Optional: to_address split by last comma
+    if (invoice.to_address) {
+      const parts = invoice.to_address.split(",").map((p) => p.trim());
+      if (parts.length > 1) {
+        const last = parts.pop(); // Pincode or last item
+        const line1 = parts.join(", ");
+        doc.text(line1, 20, offsetY);
+        offsetY += 4;
+        doc.text(String(last), 20, offsetY);
+        offsetY += 4;
+      } else {
+        doc.text(invoice.to_address, 20, offsetY);
+        offsetY += 4;
+      }
+    }
 
     // Invoice Meta
     doc.setFontSize(10);
@@ -148,14 +149,21 @@ if (invoice.to_address) {
       // Subtotal
       doc.setFont("Helvetica", "bold");
       doc.text("Sub Total :", 150, currentY, { align: "right" });
-      doc.text(`${invoice.subtotal.toLocaleString()}`, 190, currentY, { align: "right" });
+      doc.text(`${invoice.subtotal.toLocaleString()}`, 190, currentY, {
+        align: "right",
+      });
       currentY += 6;
 
       // Discount (conditionally render)
       if (Number(invoice.discount) !== 0) {
         doc.setFont("Helvetica", "bold");
         doc.text("Discount :", 150, currentY, { align: "right" });
-        doc.text(`-${Number(invoice.discount).toLocaleString()}`, 190, currentY, { align: "right" });
+        doc.text(
+          `-${Number(invoice.discount).toLocaleString()}`,
+          190,
+          currentY,
+          { align: "right" }
+        );
         currentY += 6;
       }
 
@@ -164,8 +172,12 @@ if (invoice.to_address) {
       doc.rect(130, currentY - 4, 70, 8, "F");
       doc.setTextColor(0);
       doc.setFont("Helvetica", "bold");
-      doc.text("Tax :", 150, currentY + 2, { align: "right" });
-      doc.text(`${invoice.tax_rate}%`, 190, currentY + 2, { align: "right" });
+      // Show "Tax: (tax_rate%)"
+      doc.text(`Tax: (${invoice.tax_rate}%)`, 150, currentY + 2, {
+        align: "right",
+      });
+      // Show tax amount instead of tax_rate%
+      doc.text(`${invoice.tax_amount}`, 190, currentY + 2, { align: "right" });
 
       currentY += 12;
 
@@ -173,7 +185,9 @@ if (invoice.to_address) {
       doc.setFontSize(13);
       doc.setFont("Helvetica", "bold");
       doc.text("Total :", 150, currentY, { align: "right" });
-      doc.text(`${invoice.total.toLocaleString()}`, 190, currentY, { align: "right" });
+      doc.text(`${invoice.total.toLocaleString()}`, 190, currentY, {
+        align: "right",
+      });
     }
 
     return y + 30;
@@ -183,7 +197,7 @@ if (invoice.to_address) {
   const addServices = (y: number) => {
     doc.setFontSize(11);
     doc.setFont("Helvetica", "bold");
-    doc.text("Accounting Tax & Other Services:", 20, y+4);
+    doc.text("Accounting Tax & Other Services:", 20, y + 4);
 
     // Box setup
     const boxX = 20;
@@ -236,7 +250,12 @@ if (invoice.to_address) {
   };
 
   // Function to add footer content
-  const addFooter = (y: number, isLastPage: boolean = false, currentPage: number, totalPages: number) => {
+  const addFooter = (
+    y: number,
+    isLastPage: boolean = false,
+    currentPage: number,
+    totalPages: number
+  ) => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const stripHeightValue = 1;
     const stripY = y;
@@ -283,9 +302,14 @@ if (invoice.to_address) {
     });
 
     doc.setFont("Helvetica", "normal");
-    doc.text("30 DAYS Credit from date of invoice.", pageWidth - 10, footerY + 10, {
-      align: "right",
-    });
+    doc.text(
+      "30 DAYS Credit from date of invoice.",
+      pageWidth - 10,
+      footerY + 10,
+      {
+        align: "right",
+      }
+    );
 
     // === Vertical Separators ===
     doc.setDrawColor(100);
@@ -297,9 +321,14 @@ if (invoice.to_address) {
     // Line after 2nd column
     doc.line(colWidth * 2, stripY + 4, colWidth * 2, footerY + 10);
 
-      doc.setFont("Helvetica", "italic");
-      doc.setFontSize(9);
-      doc.text(`Page ${currentPage} of ${totalPages}`, pageWidth / 2, footerY + 20, { align: "center" });
+    doc.setFont("Helvetica", "italic");
+    doc.setFontSize(9);
+    doc.text(
+      `Page ${currentPage} of ${totalPages}`,
+      pageWidth / 2,
+      footerY + 20,
+      { align: "center" }
+    );
   };
 
   // Process each page
@@ -314,19 +343,30 @@ if (invoice.to_address) {
     // Add items table
     autoTable(doc, {
       startY: y + 15,
-      head: [[
-        { content: "SL.", styles: { halign: 'center' } },
-        { content: "Item Description", styles: { halign: 'left' } },
-        { content: "Price", styles: { halign: 'center' } },
-        { content: "Qty", styles: { halign: 'center' } },
-        { content: "Total", styles: { halign: 'center' } }
-      ]],
+      head: [
+        [
+          { content: "SL.", styles: { halign: "center" } },
+          { content: "Item Description", styles: { halign: "left" } },
+          { content: "Price", styles: { halign: "center" } },
+          { content: "Qty", styles: { halign: "center" } },
+          { content: "Total", styles: { halign: "center" } },
+        ],
+      ],
       body: chunk.map((item, i) => [
-        { content: (i + 1 + (index * itemsPerPage)).toString().padStart(2, "0"), styles: { halign: 'center' } },
-        { content: item.description, styles: { halign: 'left' } },
-        { content: `${Number(item.rate).toLocaleString()}`, styles: { halign: 'center' } },
-        { content: item.quantity.toString(), styles: { halign: 'center' } },
-        { content: `${Number(item.amount).toLocaleString()}`, styles: { halign: 'center' } }
+        {
+          content: (i + 1 + index * itemsPerPage).toString().padStart(2, "0"),
+          styles: { halign: "center" },
+        },
+        { content: item.description, styles: { halign: "left" } },
+        {
+          content: `${Number(item.rate).toLocaleString()}`,
+          styles: { halign: "center" },
+        },
+        { content: item.quantity.toString(), styles: { halign: "center" } },
+        {
+          content: `${Number(item.amount).toLocaleString()}`,
+          styles: { halign: "center" },
+        },
       ]),
       styles: {
         fontSize: 10,
@@ -336,20 +376,20 @@ if (invoice.to_address) {
       headStyles: {
         fillColor: [56, 57, 69],
         textColor: 255,
-        fontStyle: 'bold',
+        fontStyle: "bold",
         lineWidth: 0.1,
         cellPadding: { top: 5, bottom: 5, left: 3, right: 3 },
         minCellHeight: 12,
       },
       columnStyles: {
-        0: { cellWidth: 'auto', halign: 'center' },
-        1: { cellWidth: 'wrap', halign: 'left' },
-        2: { cellWidth: 'auto', halign: 'center' },
-        3: { cellWidth: 'auto', halign: 'center' },
-        4: { cellWidth: 'auto', halign: 'center' }
+        0: { cellWidth: "auto", halign: "center" },
+        1: { cellWidth: "wrap", halign: "left" },
+        2: { cellWidth: "auto", halign: "center" },
+        3: { cellWidth: "auto", halign: "center" },
+        4: { cellWidth: "auto", halign: "center" },
       },
       bodyStyles: {
-        valign: 'middle',
+        valign: "middle",
         lineWidth: 0.1,
       },
     });
@@ -365,7 +405,12 @@ if (invoice.to_address) {
     currentY = addServices(currentY);
 
     // Add footer
-    addFooter(currentY, index === itemChunks.length - 1, index + 1, itemChunks.length);
+    addFooter(
+      currentY,
+      index === itemChunks.length - 1,
+      index + 1,
+      itemChunks.length
+    );
   });
 
   // Save PDF
