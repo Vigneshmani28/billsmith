@@ -12,7 +12,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, MoreVertical, Download, Search, X } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  MoreVertical,
+  Download,
+  Search,
+  X,
+  Mail,
+  Loader2,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -71,6 +81,8 @@ export default function HomePage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null); // invoice id
+  const [emailSent, setEmailSent] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -146,17 +158,16 @@ export default function HomePage() {
   );
 
   const statusCounts = invoices.reduce(
-  (acc, invoice) => {
-    const status = invoice.status.toLowerCase();
-    if (status === "paid") acc.paid += 1;
-    else if (status === "unpaid") acc.unpaid += 1;
-    else if (status === "partial") acc.partial += 1;
-    else if (status === "overdue") acc.overdue += 1;
-    return acc;
-  },
-  { paid: 0, unpaid: 0, partial: 0, overdue: 0 }
-);
-
+    (acc, invoice) => {
+      const status = invoice.status.toLowerCase();
+      if (status === "paid") acc.paid += 1;
+      else if (status === "unpaid") acc.unpaid += 1;
+      else if (status === "partial") acc.partial += 1;
+      else if (status === "overdue") acc.overdue += 1;
+      return acc;
+    },
+    { paid: 0, unpaid: 0, partial: 0, overdue: 0 }
+  );
 
   const getVariant = (status: string) => {
     switch (status) {
@@ -169,14 +180,32 @@ export default function HomePage() {
       default:
         return "unpaid";
     }
-  }
+  };
+
+  const handleSendMail = async (invoice: InvoiceData) => {
+    try {
+      await fetch("/api/send-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: `${invoice.to_email}`,
+          subject: `#${invoice.invoice_number} Invoice`,
+          html: "<h1>Invoice</h1><p>Thanks for your business!</p>",
+        }),
+      });
+      toast.success("Invoice email sent successfully!");
+    } catch (error) {
+      toast.error("Failed to send invoice email");
+      console.error("Failed to send email:", error);
+    }
+  };
 
   return (
     <div className=" mx-auto p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-           Create and manage your invoices
+            Create and manage your invoices
           </h2>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             View, edit, and manage all your saved invoices.
@@ -318,6 +347,37 @@ export default function HomePage() {
                     <Trash2 className="mr-2 h-4 w-4 text-destructive" />
                     Delete
                   </DropdownMenuItem>
+                  {/* <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                    }}
+                    onClick={async () => {
+                      setSendingEmail(inv.id);
+                      setEmailSent(null);
+
+                      try {
+                        await handleSendMail(inv);
+                        setEmailSent(inv.id);
+                        setTimeout(() => {
+                          setEmailSent(null);
+                        }, 1000);
+                      } catch (err) {
+                        console.error("Mail sending failed:", err);
+                      } finally {
+                        setSendingEmail(null);
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {sendingEmail === inv.id ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : emailSent === inv.id ? (
+                      <Check className="mr-2 h-4 w-4 text-green-500" />
+                    ) : (
+                      <Mail className="mr-2 h-4 w-4" />
+                    )}
+                    Send mail
+                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </Card>
