@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import { InvoiceData } from "@/types/invoice";
 import autoTable from "jspdf-autotable";
+import { OwnerInfo, Services } from "@/lib/contants";
 
 export const generatePDF = (invoice: InvoiceData) => {
   function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -19,12 +20,12 @@ export const generatePDF = (invoice: InvoiceData) => {
   const addHeader = (y: number) => {
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(18);
-    doc.text("Naresh Kumar M", 20, y);
+    doc.text(OwnerInfo.name, 20, y);
 
     doc.setFontSize(11);
-    doc.text("PAN - AUQPN2096R", 20, y + 6);
+    doc.text(`PAN - ${OwnerInfo.pan}`, 20, y + 6);
     doc.setFont("Helvetica", "normal");
-    doc.text("Office Branches - Guduvancheri / MWC Chengalpattu", 20, y + 12);
+    doc.text(`Office Branches - ${OwnerInfo.office_braches}`, 20, y + 12);
 
     // Right-aligned Head Office info
     doc.setFont("Helvetica", "bold");
@@ -32,11 +33,11 @@ export const generatePDF = (invoice: InvoiceData) => {
     doc.text("Head Office :", 200, y, { align: "right" });
 
     doc.setFont("Helvetica", "normal");
-    doc.text("Door No -836,", 200, y + 6, { align: "right" });
-    doc.text("25th Street, B.V.Colony, Vyasarpadi,", 200, y + 12, {
+    doc.text(`${OwnerInfo.head_office.door_no},`, 200, y + 6, { align: "right" });
+    doc.text(`${OwnerInfo.head_office.address},`, 200, y + 12, {
       align: "right",
     });
-    doc.text("Chennai - 600039.", 200, y + 18, { align: "right" });
+    doc.text(`${OwnerInfo.head_office.city}.`, 200, y + 18, { align: "right" });
 
     // Yellow strip with "INVOICE"
     y += 20;
@@ -122,25 +123,25 @@ export const generatePDF = (invoice: InvoiceData) => {
 
     // Payment Info details
     doc.setFont("Helvetica", "bold");
-    doc.text("Account :", 20, y + 6);
+    doc.text("Account NO :", 20, y + 6);
     doc.setFont("Helvetica", "normal");
-    doc.text("0912101062689", 50, y + 6);
+    doc.text(OwnerInfo.bank_account.account_number, 50, y + 6);
 
     doc.setFont("Helvetica", "bold");
     doc.text("A/C Name :", 20, y + 12);
     doc.setFont("Helvetica", "normal");
-    doc.text("NARESH KUMAR M", 50, y + 12);
+    doc.text(OwnerInfo.bank_account.account_name, 50, y + 12);
 
     doc.setFont("Helvetica", "bold");
     doc.text("Bank Details :", 20, y + 18);
     doc.setFont("Helvetica", "normal");
-    doc.text("CANARA BANK", 50, y + 18);
+    doc.text(OwnerInfo.bank_account.bank_name, 50, y + 18);
 
     doc.setFont("Helvetica", "bold");
     doc.text("IFSC Code :", 20, y + 24);
     doc.setFont("Helvetica", "normal");
     doc.setTextColor(0);
-    doc.text("CNRB0000912", 50, y + 24);
+    doc.text(OwnerInfo.bank_account.ifsc, 50, y + 24);
 
     // === Right side: Totals (only on last page) ===
     if (isLastPage) {
@@ -222,15 +223,16 @@ export const generatePDF = (invoice: InvoiceData) => {
     doc.setFont("Helvetica", "normal");
     doc.setFontSize(fontSize);
 
+    function chunkArray<T>(array: T[], size: number): T[][] {
+      const result: T[][] = [];
+      for (let i = 0; i < array.length; i += size) {
+        result.push(array.slice(i, i + size));
+      }
+      return result;
+    }
+
     // Services array
-    const services = [
-      ["Accounting", "Income Tax Returns", "GEM Registration"],
-      ["Auditing", "TDS Returns", "GST Registration"],
-      ["Tax Audit", "ROC Compliances", "MSME Registration"],
-      ["PAN / TAN", "Financial Consultancy", "Firm Registration"],
-      ["Food License", "ISO Certification", "Company Registration"],
-      ["GST Returns", "ISO Audit", "Other Services"],
-    ];
+    const services = chunkArray(Services, 3);
 
     // Draw services with bullets
     services.forEach((row) => {

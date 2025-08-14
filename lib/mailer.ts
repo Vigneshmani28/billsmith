@@ -1,5 +1,7 @@
 // lib/mailer.ts
+import { InvoiceData } from "@/types/invoice";
 import nodemailer from "nodemailer";
+import { getInvoiceEmailTemplate } from "./emailTemplates";
 
 export const transporter = nodemailer.createTransport({
   service: process.env.SMTP_HOST,
@@ -15,19 +17,21 @@ export const transporter = nodemailer.createTransport({
 export async function sendInvoiceEmail({
   to,
   subject,
-  html,
+  invoice
 }: {
   to: string;
   subject: string;
-  html: string;
+  invoice: InvoiceData;
 }) {
+  const html = getInvoiceEmailTemplate(invoice);
+
   const info = await transporter.sendMail({
-  from: `"Invoice App" <${process.env.SMTP_USER}>`,
-  to,
-  subject: "Your Invoice",
-  text: "Hello, please find your invoice attached.",
-  html
-});
+    from: `"Invoice App" <${process.env.SMTP_USER}>`,
+    to,
+    subject,
+    text: `Invoice #${invoice.invoice_number} from ${invoice.from_name} - Total ₹${invoice.total}`,
+    html,
+  });
 
   console.log("Email sent:", info.messageId);
 }

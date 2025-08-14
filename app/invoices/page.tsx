@@ -43,6 +43,8 @@ import {
 import { generatePDF } from "@/utils/pdf-generator";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/lib/hooks/use-debounce";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import DatePicker from "@/components/CustomDateFilter";
 
 interface InvoiceItem {
   id: string;
@@ -85,6 +87,10 @@ export default function HomePage() {
   const [emailSent, setEmailSent] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 0);
 
@@ -149,25 +155,65 @@ export default function HomePage() {
     }
   };
 
-  const filteredInvoices = invoices.filter(
-    (inv) =>
-      inv.invoice_number
-        .toLowerCase()
-        .includes(debouncedSearchTerm.toLowerCase()) ||
-      inv.to_name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-  );
+  const filteredInvoices = invoices.filter((inv) => {
+  // 1️⃣ Search filter
+  const matchesSearch =
+    !debouncedSearchTerm ||
+    inv.invoice_number.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    inv.to_name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-  const statusCounts = invoices.reduce(
-    (acc, invoice) => {
-      const status = invoice.status.toLowerCase();
-      if (status === "paid") acc.paid += 1;
-      else if (status === "unpaid") acc.unpaid += 1;
-      else if (status === "partial") acc.partial += 1;
-      else if (status === "overdue") acc.overdue += 1;
-      return acc;
-    },
-    { paid: 0, unpaid: 0, partial: 0, overdue: 0 }
-  );
+  // 2️⃣ Status filter
+  const matchesStatus =
+    !statusFilter || inv.status.toLowerCase() === statusFilter.toLowerCase();
+
+  // 3️⃣ Date filter
+  const matchesDate = (() => {
+    if (!dateFilter) return true;
+
+    const invoiceDate = new Date(inv.date);
+
+    if (dateFilter === "today") {
+      const today = new Date();
+      return invoiceDate.toDateString() === today.toDateString();
+    }
+
+    if (dateFilter === "this_week") {
+      const today = new Date();
+    const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    return invoiceDate >= startOfWeek && invoiceDate <= endOfWeek;
+    }
+
+    if (dateFilter === "this_month") {
+      const today = new Date();
+    return (
+      invoiceDate.getMonth() === today.getMonth() &&
+      invoiceDate.getFullYear() === today.getFullYear()
+    );
+    }
+
+    if (dateFilter === "custom") {
+    if (customStartDate && customEndDate) {
+      return invoiceDate >= customStartDate && invoiceDate <= customEndDate;
+    }
+  }
+
+    return true; // For "custom" or not implemented
+  })();
+
+  return matchesSearch && matchesStatus && matchesDate;
+});
+
+const resetFilters = () => {
+  setSearchTerm("");
+  setDateFilter("");
+  setStatusFilter("");
+  setCustomStartDate(undefined);
+  setCustomEndDate(undefined);
+};
+
+
 
   const getVariant = (status: string) => {
     switch (status) {
@@ -183,22 +229,19 @@ export default function HomePage() {
   };
 
   const handleSendMail = async (invoice: InvoiceData) => {
-    try {
-      await fetch("/api/send-invoice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: `${invoice.to_email}`,
-          subject: `#${invoice.invoice_number} Invoice`,
-          html: "<h1>Invoice</h1><p>Thanks for your business!</p>",
-        }),
-      });
-      toast.success("Invoice email sent successfully!");
-    } catch (error) {
-      toast.error("Failed to send invoice email");
-      console.error("Failed to send email:", error);
-    }
-  };
+  try {
+    await fetch("/api/send-invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ invoice }),
+    });
+    toast.success("Invoice email sent successfully!");
+  } catch (error) {
+    toast.error("Failed to send invoice email");
+    console.error("Failed to send email:", error);
+  }
+};
+
 
   return (
     <div className=" mx-auto p-4 sm:p-6">
@@ -219,38 +262,94 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <div className="mb-10 relative w-full max-w-sm">
-        {/* Search icon */}
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+ <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
 
-        {/* Input */}
-        <Input
-          ref={inputRef}
-          placeholder="Search by client or invoice number"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-20"
-        />
+  {/* Left side: Search */}
+  <div className="w-full sm:max-w-sm relative">
+    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+    <Input
+      ref={inputRef}
+      placeholder="Search by client or invoice number"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="pl-10 pr-20"
+    />
+    <Badge
+      variant="outline"
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none"
+    >
+      /
+    </Badge>
+    {searchTerm && (
+      <button
+        onClick={() => setSearchTerm("")}
+        className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+        aria-label="Clear search"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    )}
+  </div>
 
-        {/* Shortcut hint */}
-        <Badge
-          variant="outline"
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none"
-        >
-          /
-        </Badge>
+  {/* Right side: Filters */}
+  <div className="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
 
-        {/* Clear button */}
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm("")}
-            className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
-            aria-label="Clear search"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+    {/* Date Filter */}
+    <Select value={dateFilter} onValueChange={setDateFilter}>
+      <SelectTrigger className="w-[140px]">
+        <SelectValue placeholder="Date filter" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="today">Today</SelectItem>
+        <SelectItem value="this_week">This Week</SelectItem>
+        <SelectItem value="this_month">This Month</SelectItem>
+        <SelectItem value="custom">Custom</SelectItem>
+      </SelectContent>
+    </Select>
+
+    {dateFilter === "custom" && (
+      <div className="flex items-center gap-2">
+        {/* Start Date */}
+        <div className="w-36">
+          <DatePicker
+            selectedDate={customStartDate}
+            onSelect={(date) => setCustomStartDate(date ?? undefined)}
+          />
+        </div>
+        <span className="text-sm text-muted-foreground">-</span>
+        {/* End Date */}
+        <div className="w-36">
+          <DatePicker
+            selectedDate={customEndDate}
+            onSelect={(date) => setCustomEndDate(date ?? undefined)}
+          />
+        </div>
       </div>
+    )}
+
+    {/* Status Filter */}
+    <Select value={statusFilter} onValueChange={setStatusFilter}>
+      <SelectTrigger className="w-[160px]">
+        <SelectValue placeholder="Invoice status" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="paid">Paid</SelectItem>
+        <SelectItem value="unpaid">Unpaid</SelectItem>
+        <SelectItem value="partial">Partial</SelectItem>
+        <SelectItem value="overdue">Overdue</SelectItem>
+      </SelectContent>
+    </Select>
+
+    {/* Reset Button */}
+    { (searchTerm || dateFilter || statusFilter || customStartDate || customEndDate) && (
+      <Button variant="destructive" onClick={resetFilters}>
+      Reset Filters
+    </Button>
+    )}
+  </div>
+</div>
+
+
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

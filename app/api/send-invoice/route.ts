@@ -2,10 +2,15 @@
 import { sendInvoiceEmail } from "@/lib/mailer";
 
 export async function POST(req: Request) {
-  const { to, subject, html } = await req.json();
+  const { invoice } = await req.json();
 
   try {
-    await sendInvoiceEmail({ to, subject, html });
+    await sendInvoiceEmail({
+      to: invoice.to_email,
+      subject: `#${invoice.invoice_number} Invoice`,
+      invoice,
+    });
+
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (error) {
     console.error("Email error:", error);

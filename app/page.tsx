@@ -317,8 +317,8 @@ const Dashboard = () => {
                   recentInvoices.map((invoice) => (
                     <div
                       key={invoice.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
+                      className="cursor-pointer flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                     onClick={() => router.push(`/invoice/${invoice.id}/edit`)}>
                       <div className="space-y-1">
                         <div className="font-medium">
                           #{invoice.invoice_number} - {invoice.to_name}
