@@ -14,15 +14,11 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useUser();
 
-  // Wait for user to load
   if (!isLoaded) return null;
 
   return (
@@ -47,13 +43,15 @@ export default function AuthLayout({
           </TooltipProvider>
         </SidebarProvider>
       ) : (
-        // Render only the main layout without sidebar and show children (or redirect to sign-in page)
         <div className="min-h-screen flex flex-col">
           <Navbar />
           <main className="flex-1 p-4">{children}</main>
           <Footer />
         </div>
       )}
+
+      {/* Floating Scroll to Top Button */}
+      <ScrollToTopButton />
 
       {/* Notifications */}
       <Toaster position="top-right" />
