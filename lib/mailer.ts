@@ -1,7 +1,7 @@
 // lib/mailer.ts
 import { InvoiceData } from "@/types/invoice";
 import nodemailer from "nodemailer";
-import { getInvoiceEmailTemplate } from "./emailTemplates";
+import { getInvoicePublicLinkTemplate } from "./emailTemplates";
 
 export const transporter = nodemailer.createTransport({
   service: process.env.SMTP_HOST,
@@ -23,10 +23,10 @@ export async function sendInvoiceEmail({
   subject: string;
   invoice: InvoiceData;
 }) {
-  const html = getInvoiceEmailTemplate(invoice);
+  const html = getInvoicePublicLinkTemplate(invoice);
 
   const info = await transporter.sendMail({
-    from: `"Invoice App" <${process.env.SMTP_USER}>`,
+    from: `"Billsmith Invoices" <${process.env.SMTP_USER}>`,
     to,
     subject,
     text: `Invoice #${invoice.invoice_number} from ${invoice.from_name} - Total ₹${invoice.total}`,

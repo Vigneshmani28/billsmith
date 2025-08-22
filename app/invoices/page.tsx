@@ -22,6 +22,8 @@ import {
   Mail,
   Loader2,
   Check,
+  Share,
+  Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -71,6 +73,7 @@ interface InvoiceData {
   subtotal: number;
   tax_amount: number;
   total: number;
+  public_id : string;
   created_at: string;
 }
 
@@ -241,6 +244,20 @@ const resetFilters = () => {
     console.error("Failed to send email:", error);
   }
 };
+
+ async function handleShareInvoice(invoice_public_id: string) {
+  try {
+    if (navigator.clipboard) {
+      const publicUrl = `${window.location.origin}/public/invoice/${invoice_public_id}`;
+      await navigator.clipboard.writeText(publicUrl);
+      toast.success("Invoice link copied to clipboard!");
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to make invoice public");
+  }
+}
+
 
 
   return (
@@ -439,14 +456,13 @@ const resetFilters = () => {
                     Download Invoice
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => handleDeleteClick(inv.id)}
-                    disabled={deletingId === inv.id}
-                    className="text-destructive focus:text-destructive cursor-pointer"
+                    onClick={() => handleShareInvoice(inv.public_id)}
+                    className="cursor-pointer"
                   >
-                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                    Delete
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Copy Public Link
                   </DropdownMenuItem>
-                  {/* <DropdownMenuItem
+                  <DropdownMenuItem
                     onSelect={(e) => {
                       e.preventDefault();
                     }}
@@ -476,7 +492,15 @@ const resetFilters = () => {
                       <Mail className="mr-2 h-4 w-4" />
                     )}
                     Send mail
-                  </DropdownMenuItem> */}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDeleteClick(inv.id)}
+                    disabled={deletingId === inv.id}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                    Delete
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </Card>

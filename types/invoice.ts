@@ -23,6 +23,7 @@ export interface InvoiceData {
   tax_amount: number;
   total: number;
   user_id?:string
+  public_id?: string;
   id?:string
   created_at?: string;
 }

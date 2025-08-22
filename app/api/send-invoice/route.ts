@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   try {
     await sendInvoiceEmail({
       to: invoice.to_email,
-      subject: `#${invoice.invoice_number} Invoice`,
+      subject:  `Invoice #${invoice.invoice_number} from ${invoice.from_name}`,
       invoice,
     });
 

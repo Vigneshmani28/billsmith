@@ -26,6 +26,7 @@ interface InvoiceData {
   subtotal: number;
   tax_amount: number;
   total: number;
+  public_id : string;
   created_at: string;
 }
 

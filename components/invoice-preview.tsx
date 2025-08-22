@@ -10,15 +10,20 @@ import { supabase } from "@/lib/supabase"; // make sure this is set up
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { OwnerInfo, Services } from "@/lib/contants";
+import { InvoiceData } from "@/types/invoice";
 
 interface InvoicePreviewProps {
-  onBack: () => void;
-  id?: string; // Optional ID for editing existing invoices
+  onBack?: () => void;
+  id?: string;
+  invoice?: InvoiceData;
+  readOnly?: boolean;
 }
 
-export default function InvoicePreview({ onBack, id }: InvoicePreviewProps) {
-  const { invoice } = useInvoice();
+export default function InvoicePreview({ onBack, id, invoice: propInvoice, readOnly }: InvoicePreviewProps) {
+  const { invoice: contextInvoice } = useInvoice();
   const { user } = useUser();
+
+  const invoice = propInvoice ?? contextInvoice;
 
   const servicesPerColumn = Math.ceil(Services.length / 3);
   const servicesColumns = [
@@ -62,45 +67,52 @@ export default function InvoicePreview({ onBack, id }: InvoicePreviewProps) {
       toast.error("Failed to save invoice.");
     } else {
       toast.success("Invoice saved successfully!");
-      onBack();
+      if (onBack) {
+        onBack();
+      }
     }
   };
 
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Invoice Preview</h1>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:items-center">
-            {!id && (
-              <Button
-                variant="outline"
-                onClick={onBack}
-                className="w-full sm:w-auto"
-              >
-                Back to Edit
-              </Button>
-            )}
-            <Button onClick={handleDownloadPDF} className="w-full sm:w-auto">
-              <Download className="w-4 h-4 mr-2" />
-              Download PDF
-            </Button>
-            {!id && (
-              <Button
-                onClick={handleSaveInvoice}
-                disabled={
-                  !invoice.items.length ||
-                  !invoice.to_name ||
-                  !invoice.from_name
-                }
-                className="w-full sm:w-auto"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Invoice
-              </Button>
-            )}
-          </div>
-        </div>
+       <div className="flex justify-between items-center mb-6">
+  <h1 className="text-2xl font-bold">Invoice Preview</h1>
+  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:items-center">
+    {/* Only show Back and Save if not readOnly */}
+    {!readOnly && !id && (
+      <Button
+        variant="outline"
+        onClick={onBack}
+        className="w-full sm:w-auto"
+      >
+        Back to Edit
+      </Button>
+    )}
+
+    {/* Always show Download PDF */}
+    <Button onClick={handleDownloadPDF} className="w-full sm:w-auto">
+      <Download className="w-4 h-4 mr-2" />
+      Download PDF
+    </Button>
+
+    {!readOnly && !id && (
+      <Button
+        onClick={handleSaveInvoice}
+        disabled={
+          !invoice.items.length ||
+          !invoice.to_name ||
+          !invoice.from_name
+        }
+        className="w-full sm:w-auto"
+      >
+        <Save className="w-4 h-4 mr-2" />
+        Save Invoice
+      </Button>
+    )}
+  </div>
+</div>
+
 
          <Card className="border shadow-md">
       <CardContent className="p-8">
