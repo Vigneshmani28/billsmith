@@ -1,7 +1,8 @@
 import { InvoiceData } from "@/types/invoice";
 
 export function getInvoicePublicLinkTemplate(invoice: InvoiceData) {
-  const publicUrl = `${window.location.origin}/public/invoice/${invoice.public_id}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const publicUrl = `${baseUrl}/public/invoice/${invoice.public_id}`;
 
   return `
   <html>
