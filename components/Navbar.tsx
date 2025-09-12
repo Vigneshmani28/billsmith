@@ -2,9 +2,29 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { useAuth } from "@/context/auth-context";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // adjust path if needed
+import {
+  AlertCircle,
+  CheckCircle,
+  LogOut,
+  MoveRight,
+  User,
+} from "lucide-react";
 
 export default function Navbar() {
+  const { user, logout } = useAuth();
+
+  console.log("Navbar user:", user);
+
+  const displayName = user?.name || user?.username || "User";
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -24,25 +44,44 @@ export default function Navbar() {
 
           {/* Right section */}
           <div className="flex items-center gap-4">
-            <SignedIn>
-              <UserButton
-                afterSignOutUrl="/"
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: "h-9 w-9",
-                    userButtonPopoverCard: "shadow-lg rounded-xl",
-                  },
-                }}
-              />
-            </SignedIn>
-
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className="inline-flex items-center rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:from-blue-600 hover:to-indigo-700 focus:outline-none active:scale-95 transition">
-                  Sign In
-                </button>
-              </SignInButton>
-            </SignedOut>
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">{displayName}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <span className="font-medium flex items-center gap-1">
+                          {user?.username || user?.name}
+                          {user?.isConfirmed ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-red-500" />
+                          )}
+                        </span>
+                        {user?.email && (
+                          <span className="text-xs text-muted-foreground">
+                            {user.email}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="group flex items-center gap-2 !text-red-500 !hover:text-red-600 cursor-pointer"
+                  >
+                    Logout
+                    <LogOut className="h-3 w-3 !text-red-500 group-hover:!text-red-600" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>

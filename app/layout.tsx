@@ -2,16 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { InvoiceProvider } from "@/context/invoice-context";
-import { ClerkProvider } from "@clerk/nextjs";
-import Navbar from "@/components/Navbar";
-import { Toaster } from "@/components/ui/sonner";
-import Footer from "@/components/Footer";
-
-// shadcn/ui sidebar imports
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthLayout from "@/components/AuthLayout";
+import { ReduxProvider } from "@/providers/ReduxProvider";
+import { AuthProvider } from "@/context/auth-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,10 +48,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
+    <html lang="en">
+      <AuthProvider>
+        <ReduxProvider>
         <InvoiceProvider>
-          <body
+         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
             style={{
               backgroundImage:
@@ -66,10 +60,11 @@ export default function RootLayout({
               backgroundSize: "20px 20px",
             }}
           >
-            <AuthLayout>{children}</AuthLayout>
+           <AuthLayout>{children}</AuthLayout>
           </body>
         </InvoiceProvider>
-      </html>
-    </ClerkProvider>
+        </ReduxProvider>
+      </AuthProvider>
+    </html>
   );
 }

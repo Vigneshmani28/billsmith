@@ -2,17 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
 import { useInvoice } from "@/context/invoice-context";
 import InvoiceForm from "@/components/invoice-form";
 import InvoicePreview from "@/components/invoice-preview";
-import { Eye, Save } from "lucide-react";
+import { Eye, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  fetchInvoiceById,
-  updateInvoiceInDB,
-} from "@/lib/supabase/fetchInvoices";
-import { InvoiceData, InvoiceStatus } from "@/types/invoice";
+import { InvoiceStatus } from "@/types/invoice";
 import { toast } from "sonner";
 import { ContentLoader } from "@/components/loader";
 import {
@@ -22,67 +17,133 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/context/auth-context";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import {
+  clearInvoice,
+  fetchInvoiceById,
+} from "@/store/slices/invoice/invoiceByIdSlice";
+import { updateInvoice } from "@/store/slices/invoice/updateInvoice";
+import isEqual from "lodash.isequal";
 
 export default function EditInvoicePage() {
   const { id } = useParams();
   const router = useRouter();
-  const { userId, isLoaded } = useAuth();
-  const { invoice, setFullInvoice } = useInvoice();
+  const { user, loading: authLoading } = useAuth();
 
-  const [loading, setLoading] = useState(true);
+  function normalizeInvoiceForCompare(data: any): any {
+  return {
+    invoice_number: data.invoice_number,
+    date: data.date,
+    from_name: data.from_name,
+    from_email: data.from_email,
+    to_name: data.to_name,
+    to_email: data.to_email,
+    to_address: data.to_address,
+    status: data.status,
+    tax_rate: Number(data.tax_rate),
+    discount: Number(data.discount),
+    subtotal: Number(data.subtotal),
+    tax_amount: Number(data.tax_amount),
+    total: Number(data.total),
+    items: data.items.map((item: any) => ({
+      id: item.id,
+      description: item.description,
+      quantity: Number(item.quantity),
+      rate: Number(item.rate),
+      amount: Number(item.amount),
+    })),
+  };
+}
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { loading } = useSelector((state: RootState) => state.updateInvoice);
+
+  const {
+    invoice: data,
+    loading: invoiceLoading,
+    error,
+  } = useSelector((state: RootState) => state.invoiceById);
+
+  const { invoice, setFullInvoice } = useInvoice();
   const [showPreview, setShowPreview] = useState(false);
 
+  // Redirect if not logged in
   useEffect(() => {
-    if (!isLoaded) return;
-
-    if (!userId) {
+    if (!authLoading && !user) {
       router.push("/sign-in");
-      return;
     }
+  }, [authLoading, user, router]);
 
-    const loadInvoice = async () => {
-      // Only fetch and set invoice if not already set
-      if (invoice && invoice.invoice_number) {
-        const data = await fetchInvoiceById(id as string);
-        if (!data) {
-          alert("Invoice not found");
-          router.push("/");
-          return;
-        }
+  // Fetch invoice on id change
+  useEffect(() => {
+    if (id && user) {
+      dispatch(fetchInvoiceById(id as string));
+    }
+  }, [id, user, dispatch]);
 
-        setFullInvoice({
-          invoice_number: data.invoice_number,
-          date: data.date,
-          from_name: data.from_name,
-          from_email: data.from_email,
-          to_name: data.to_name,
-          to_email: data.to_email,
-          to_address: data.to_address,
-          status: data.status,
-          items: data.items,
-          tax_rate: data.tax_rate,
-          subtotal: data.subtotal,
-          tax_amount: data.tax_amount,
-          discount: data.discount,
-          total: data.total,
-        });
-      }
-      setLoading(false);
+  // Sync Redux invoice data into context
+  useEffect(() => {
+    if (data) {
+      setFullInvoice({
+        invoice_number: data.invoice_number,
+        date: data.date,
+        from_name: data.from_name,
+        from_email: data.from_email,
+        to_name: data.to_name,
+        to_email: data.to_email,
+        to_address: data.to_address,
+        status: data.status,
+        items: data.items,
+        tax_rate: data.tax_rate,
+        subtotal: data.subtotal,
+        tax_amount: data.tax_amount,
+        discount: data.discount,
+        total: data.total,
+      });
+    }
+  }, [data]);
+
+  const isUnchanged =
+  data && isEqual(
+    normalizeInvoiceForCompare(data),
+    normalizeInvoiceForCompare(invoice)
+  );
+
+  // Clear invoice when unmounting
+  useEffect(() => {
+    return () => {
+      dispatch(clearInvoice());
     };
-
-    loadInvoice();
-  }, []);
+  }, [dispatch]);
 
   const handleSave = async () => {
     try {
-      const updatedInvoice: InvoiceData = {
-        ...invoice,
-        id: id as string,
-        user_id: userId!,
-        created_at: new Date().toISOString(), // optional: update this if needed
+      // Restructure payload
+      const payload = {
+        invoice_number: invoice.invoice_number,
+        date: invoice.date,
+        from_name: invoice.from_name,
+        from_email: invoice.from_email,
+        to_name: invoice.to_name,
+        to_email: invoice.to_email,
+        to_address: invoice.to_address,
+        status: invoice.status,
+        tax_rate: Number(invoice.tax_rate),
+        discount: Number(invoice.discount),
+        items: invoice.items.map((item) => ({
+          description: item.description,
+          quantity: Number(item.quantity),
+          rate: Number(item.rate),
+        })),
       };
 
-      await updateInvoiceInDB(id as string, updatedInvoice);
+      await dispatch(
+        updateInvoice({ id: id as string, data: payload })
+      ).unwrap();
+
       toast.success("Invoice updated successfully!");
     } catch (error) {
       console.error(error);
@@ -90,6 +151,7 @@ export default function EditInvoicePage() {
     }
   };
 
+  // Warn before leaving page
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -100,8 +162,21 @@ export default function EditInvoicePage() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
-  if (!isLoaded || loading) return <ContentLoader />;
+  // Loading state
+  if (invoiceLoading) {
+    return <ContentLoader />;
+  }
 
+  // Error / not found
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500 font-medium">Invoice not found</p>
+      </div>
+    );
+  }
+
+  // Main content
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto">
@@ -142,9 +217,13 @@ export default function EditInvoicePage() {
               <Eye className="w-4 h-4 mr-2" />
               {showPreview ? "Back to Edit" : "Preview"}
             </Button>
-            <Button onClick={handleSave}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes
+            <Button onClick={handleSave} disabled={loading || !!isUnchanged}>
+              {loading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {loading ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </div>
