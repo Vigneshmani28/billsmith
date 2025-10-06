@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "./ui/button";
@@ -9,19 +8,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // adjust path if needed
-import {
-  AlertCircle,
-  CheckCircle,
-  LogOut,
-  MoveRight,
-  User,
-} from "lucide-react";
+} from "@/components/ui/dropdown-menu";
+import { AlertCircle, CheckCircle, LogOut, Settings, Settings2, User } from "lucide-react";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-
-  console.log("Navbar user:", user);
 
   const displayName = user?.name || user?.username || "User";
 
@@ -31,15 +22,9 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="block">
-            <div className="relative w-24 h-24">
-              <Image
-                src="/logo.png"
-                alt="BillSmith Logo"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
+            <span className="text-xl sm:text-2xl font-semibold tracking-tight bg-gradient-to-r from-gray-900 to-gray-500 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">
+              BillSmith
+            </span>
           </Link>
 
           {/* Right section */}
@@ -52,9 +37,11 @@ export default function Navbar() {
                     <span className="hidden sm:inline">{displayName}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuContent align="end" className="w-56">
+                  {/* User Info */}
+                  <DropdownMenuItem className="cursor-default select-none pointer-events-none">
                     <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
                       <div className="flex flex-col">
                         <span className="font-medium flex items-center gap-1">
                           {user?.username || user?.name}
@@ -72,12 +59,31 @@ export default function Navbar() {
                       </div>
                     </div>
                   </DropdownMenuItem>
+                  {/* Divider */}
+                  <div className="my-1">
+                    <div className="h-px bg-muted" />
+                  </div>
+                  {/* Settings */}
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/settings"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Settings2 className="w-4 h-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {/* Divider */}
+                  <div className="my-1">
+                    <div className="h-px bg-muted" />
+                  </div>
+                  {/* Logout */}
                   <DropdownMenuItem
                     onClick={logout}
                     className="group flex items-center gap-2 !text-red-500 !hover:text-red-600 cursor-pointer"
                   >
-                    Logout
-                    <LogOut className="h-3 w-3 !text-red-500 group-hover:!text-red-600" />
+                    <LogOut className="h-4 w-4 !text-red-500 group-hover:!text-red-600" />
+                    <span>Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

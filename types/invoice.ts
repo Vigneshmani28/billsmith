@@ -35,3 +35,20 @@ export enum InvoiceStatus {
   UNPAID = "unpaid",
   OVERDUE = "overdue",
 }
+
+export type BankAccount = {
+  accountNumber: string;
+  holderName: string;
+  ifsc: string;
+  branch: string;
+};
+
+export type OwnerInfo = {
+  ownerName: string;
+  gstin: string;
+  ownerEmail: string;
+  ownerPhone: string;
+  ownerPan: string;
+  ownerAddress: string;
+  bankAccount: BankAccount;
+};

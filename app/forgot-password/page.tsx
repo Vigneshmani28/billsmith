@@ -35,7 +35,6 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Forgot Password</CardTitle>
@@ -58,6 +57,5 @@ export default function ForgotPasswordPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
   );
 }

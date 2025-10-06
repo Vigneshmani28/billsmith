@@ -6,6 +6,8 @@ import updateInvoiceReducer from "./slices/invoice/updateInvoice";
 import createInvoiceReducer from "./slices/invoice/createInvoice";
 import fetchPublicInvoice from "./slices/invoice/invoicePublic";
 import confirmRegistrationReducer from "./slices/auth/confirmRegistrationSlice";
+import ownerInfoReducer from "./slices/owner/ownerInfoSlice";
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -15,6 +17,7 @@ export const store = configureStore({
     createInvoice: createInvoiceReducer,
     publicInvoice: fetchPublicInvoice,
     confirmRegistration: confirmRegistrationReducer,
+    ownerInfo: ownerInfoReducer,
   },
 });
 

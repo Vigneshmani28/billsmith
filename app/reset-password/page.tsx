@@ -57,7 +57,6 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Reset Password</CardTitle>
@@ -90,6 +89,5 @@ export default function ResetPasswordPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
   );
 }

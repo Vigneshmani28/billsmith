@@ -68,7 +68,6 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center px-4">
       <Card className="w-full max-w-md shadow-lg rounded-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -141,6 +140,5 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
   );
 }
