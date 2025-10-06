@@ -4,6 +4,8 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import type { InvoiceItem as InvoiceItemType } from "../types/invoice";
 import { useInvoice } from "@/context/invoice-context";
+import { useCurrency } from "@/context/currency-context";
+import { Currency } from "./Currency";
 
 interface InvoiceItemProps {
   item: InvoiceItemType;
@@ -17,6 +19,7 @@ export default function InvoiceItem({
   canRemove,
 }: InvoiceItemProps) {
   const { removeItem, updateItem } = useInvoice();
+  const { currency} = useCurrency();
 
   const handleQuantityChange = (value: string) => {
     // Allow empty string temporarily, but convert to number for calculations
@@ -82,7 +85,7 @@ export default function InvoiceItem({
 
   {/* Rate */}
   <div className="sm:col-span-2">
-    <Label>Rate (₹)</Label>
+    <Label>Rate ({currency})</Label>
     <Input
       type="number"
       min="0"
@@ -97,7 +100,7 @@ export default function InvoiceItem({
   <div className="sm:col-span-2">
     <Label>Amount</Label>
     <div className="h-10 px-3 py-2 bg-gray-50 border rounded-md flex items-center">
-      ₹{typeof item.amount === "number" ? item.amount.toFixed(2) : "0.00"}
+      <Currency amount={item.amount} />
     </div>
   </div>
 

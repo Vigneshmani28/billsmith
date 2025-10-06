@@ -13,6 +13,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { useState } from "react";
 import { createInvoice } from "@/store/slices/invoice/createInvoice";
 import { useRouter } from "next/navigation";
+import { Currency } from "./Currency";
 
 interface InvoicePreviewProps {
   onBack?: () => void;
@@ -188,11 +189,11 @@ export default function InvoicePreview({
             <table className="w-full mb-8 border">
               <thead>
                 <tr className="bg-gray-200 text-left text-sm font-medium">
-                  <th className="p-2 border">SL.</th>
-                  <th className="p-2 border">Item Description</th>
-                  <th className="p-2 border text-right">Price</th>
+                  <th className="p-2 border text-center">SL.</th>
+                  <th className="p-2 border text-center">Item Description</th>
+                  <th className="p-2 border text-center">Price</th>
                   <th className="p-2 border text-center">Qty</th>
-                  <th className="p-2 border text-right">Total</th>
+                  <th className="p-2 border text-center">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,11 +204,11 @@ export default function InvoicePreview({
                     </td>
                     <td className="p-2 border">{item.description}</td>
                     <td className="p-2 border text-right">
-                      &#8377;{Number(item.rate).toFixed(2)}
+                      {Number(item.rate).toFixed(2)}
                     </td>
                     <td className="p-2 border text-center">{item.quantity}</td>
                     <td className="p-2 border text-right">
-                      &#8377;{Number(item.amount).toFixed(2)}
+                      {Number(item.amount).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -238,21 +239,21 @@ export default function InvoicePreview({
               <div className="w-64 text-sm space-y-2">
                 <div className="flex justify-between">
                   <span>Sub Total:</span>
-                  <span>&#8377;{invoice.subtotal.toFixed(2)}</span>
+                  <span><Currency amount={invoice.subtotal} /></span>
                 </div>
                 <div className="flex justify-between">
                   <span>Discount:</span>
                   <span className="text-red-600">
-                    -&#8377;{invoice.discount}
+                    -<Currency amount={Number(invoice.discount)} />
                   </span>
                 </div>
                 <div className="flex justify-between bg-yellow-300 font-semibold px-2 py-1 rounded">
                   <span>Tax: ({invoice.tax_rate}%)</span>
-                  <span>&#8377;{invoice.tax_amount}</span>
+                  <span><Currency amount={invoice.tax_amount} /></span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total:</span>
-                  <span>&#8377;{invoice.total.toFixed(2)}</span>
+                  <span><Currency amount={invoice.total} /></span>
                 </div>
               </div>
             </div>

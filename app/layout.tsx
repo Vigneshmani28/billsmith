@@ -5,6 +5,7 @@ import { InvoiceProvider } from "@/context/invoice-context";
 import AuthLayout from "@/components/AuthLayout";
 import { ReduxProvider } from "@/providers/ReduxProvider";
 import { AuthProvider } from "@/context/auth-context";
+import { CurrencyProvider } from "@/context/currency-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,6 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <AuthProvider>
+        <CurrencyProvider>
         <ReduxProvider>
         <InvoiceProvider>
          <body
@@ -64,6 +66,7 @@ export default function RootLayout({
           </body>
         </InvoiceProvider>
         </ReduxProvider>
+        </CurrencyProvider>
       </AuthProvider>
     </html>
   );

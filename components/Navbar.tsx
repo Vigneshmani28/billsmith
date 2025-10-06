@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertCircle, CheckCircle, LogOut, Settings, Settings2, User } from "lucide-react";
+import { AlertCircle, CheckCircle, LogOut, Settings, User } from "lucide-react";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -69,7 +69,7 @@ export default function Navbar() {
                       href="/settings"
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <Settings2 className="w-4 h-4" />
+                      <Settings className="w-4 h-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>

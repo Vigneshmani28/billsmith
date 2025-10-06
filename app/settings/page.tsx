@@ -15,10 +15,20 @@ import {
 } from "@/store/slices/owner/ownerInfoSlice";
 import { BankAccount, OwnerInfo } from "@/types/invoice";
 import { ContentLoader } from "@/components/loader";
-import { Upload, User } from "lucide-react";
+import { Settings2, Upload, User } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { useCurrency } from "@/context/currency-context"; // adjust import path as needed
 
 const SIDEBAR_ITEMS = [
   { key: "owner", label: "Owner Info", icon: <User height={20} /> },
+  { key: "preferences", label: "Preferences", icon: <Settings2 height={20} /> },
   // Future: add more settings sections here
 ];
 
@@ -28,6 +38,8 @@ export default function SettingsPage() {
   const { info, loading, error } = useSelector(
     (state: RootState) => state.ownerInfo
   );
+
+  const { currency, setCurrency, locale, setLocale } = useCurrency();
 
   const [formData, setFormData] = useState({
     ownerName: "",
@@ -404,6 +416,44 @@ export default function SettingsPage() {
                 </Button>
               </div>
             )}
+          </section>
+        )}
+
+        {activeSection === "preferences" && (
+          <section className="max-w-xl mx-auto">
+            <h1 className="text-2xl font-bold mb-6">Preferences</h1>
+            <div className="flex flex-col gap-6">
+              <div>
+                <Label htmlFor="currency" className="mb-2 block">
+                  Currency
+                </Label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger id="currency" className="w-full">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="INR">INR (₹)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="locale" className="mb-2 block">
+                  Locale
+                </Label>
+                <Select value={locale} onValueChange={setLocale}>
+                  <SelectTrigger id="locale" className="w-full">
+                    <SelectValue placeholder="Select locale" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en-IN">en-IN</SelectItem>
+                    <SelectItem value="en-US">en-US</SelectItem>
+                    <SelectItem value="de-DE">de-DE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </section>
         )}
       </main>

@@ -2,9 +2,12 @@ import { useInvoice } from "@/context/invoice-context";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { useCurrency } from "@/context/currency-context";
+import { Currency } from "./Currency";
 
 export default function TaxAndTotals() {
   const { invoice, updateInvoice } = useInvoice();
+  const { currency } = useCurrency();
 
   // Generic change handler for numeric fields
   const handleFieldChange = (field: "tax_rate" | "discount", value: string) => {
@@ -65,21 +68,21 @@ export default function TaxAndTotals() {
         <div className="space-y-2 text-sm border-t md:border-none pt-4 md:pt-0">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal:</span>
-            <span>&#8377;{invoice.subtotal.toFixed(2)}</span>
+            <span><Currency amount={invoice.subtotal} /></span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">
               Tax ({typeof invoice.tax_rate === "number" ? invoice.tax_rate : 0}%):
             </span>
-            <span>&#8377;{invoice.tax_amount.toFixed(2)}</span>
+            <span><Currency amount={invoice.tax_amount} /></span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Discount:</span>
-            <span> - &#8377;{typeof invoice.discount === "number" ? invoice.discount.toFixed(2) : "0.00"}</span>
+            <span> - <Currency amount={typeof invoice.discount === "number" ? invoice.discount : 0} /></span>
           </div>
           <div className="flex justify-between font-semibold text-base border-t pt-2">
             <span>Total:</span>
-            <span>&#8377;{invoice.total.toFixed(2)}</span>
+            <span><Currency amount={invoice.total} /></span>
           </div>
         </div>
       </CardContent>

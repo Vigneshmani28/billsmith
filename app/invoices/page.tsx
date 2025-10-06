@@ -56,6 +56,7 @@ import { fetchInvoices } from "@/store/slices/invoice/invoiceSlice";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { deleteInvoice } from "@/store/slices/invoice/deleteInvoice";
 import { fetchInvoiceById } from "@/store/slices/invoice/invoiceByIdSlice";
+import { Currency } from "@/components/Currency";
 
 export default function HomePage() {
   const { user, token, loading } = useRequireAuth();
@@ -477,7 +478,7 @@ export default function HomePage() {
                       AMOUNT
                     </p>
                     <p className="text-2xl font-bold">
-                      ₹{inv.total.toFixed(2)}
+                      <Currency amount={inv.total} />
                     </p>
                   </div>
 

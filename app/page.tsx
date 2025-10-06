@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import StatsCard from "@/components/StatsCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Currency } from "@/components/Currency";
 
 const COLORS = {
   paid: "#10B981",
@@ -178,13 +179,7 @@ const Dashboard = () => {
 
         <StatsCard
           title="Total Revenue"
-          value={
-            "₹" +
-            totalRevenue.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })
-          }
+          value={<Currency amount={totalRevenue} />}
           subtitle="From paid invoices"
           icon={<IndianRupee className="h-6 w-6 text-green-700" />}
           color="bg-green-200 dark:bg-green-700/20"
@@ -193,13 +188,7 @@ const Dashboard = () => {
 
         <StatsCard
           title="Outstanding"
-          value={
-            "₹" +
-            outstandingAmount.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })
-          }
+          value={<Currency amount={outstandingAmount} />}
           subtitle="Unpaid / overdue invoices"
           icon={<AlertCircle className="h-6 w-6 text-red-700" />}
           color="bg-red-200 dark:bg-red-700/20"
@@ -345,7 +334,7 @@ const Dashboard = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
                       <div className="text-right min-w-0">
                         <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                          ₹{invoice.total.toFixed(2)}
+                          <Currency amount={invoice.total} />
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                           {invoice.to_email}
@@ -444,7 +433,7 @@ const Dashboard = () => {
                     <div className="flex items-center gap-4 ml-4">
                       <div className="text-right">
                         <div className="font-bold text-gray-900 dark:text-white text-lg">
-                          ₹{invoice.total.toFixed(2)}
+                          <Currency amount={invoice.total} />
                         </div>
                       </div>
 
