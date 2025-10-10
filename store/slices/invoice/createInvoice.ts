@@ -1,35 +1,17 @@
 import api from "@/lib/axios";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-
-export interface InvoiceItem {
-  description: string;
-  quantity: number;
-  rate: number;
-}
-
-export interface Invoice {
-  invoice_number: string;
-  date: string; 
-  from_name: string;
-  from_email: string;
-  to_name: string;
-  to_email: string;
-  to_address: string;
-  tax_rate: number;
-  discount: number;
-  items: InvoiceItem[];
-}
+import { InvoiceData, CreateInvoiceData } from "@/types/invoice";
 
 export const createInvoice = createAsyncThunk(
   "invoice/createInvoice",
-  async ({data }: {data: Invoice }) => {
+  async ({data }: {data: CreateInvoiceData }) => {
     const response = await api.post(`/invoices`, data);
     return response.data.data;
   }
 );
 
 interface InvoiceState {
-  current: Invoice | null;
+  current: InvoiceData | null;
   loading: boolean;
   error: string | null;
 }
@@ -48,7 +30,7 @@ const invoiceSlice = createSlice({
       state.current = null;
       state.error = null;
     },
-    setInvoice(state, action: PayloadAction<Invoice>) {
+    setInvoice(state, action: PayloadAction<InvoiceData>) {
       state.current = action.payload;
     },
   },

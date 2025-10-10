@@ -1,19 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/lib/axios";
-
-type Invoice = {
-  id: string;
-  invoice_number : string;
-  date: string;
-  to_name: string;
-  to_email: string;
-  status: string;
-  total: number;
-  public_id: string;
-};
+import { InvoiceData } from "@/types/invoice";
 
 type InvoiceState = {
-  items: Invoice[];
+  items: InvoiceData[];
   loading: boolean;
   error: string | null;
 };

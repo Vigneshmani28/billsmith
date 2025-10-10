@@ -21,6 +21,12 @@ import {
   CalendarDays,
   User2,
   Copy,
+  Grid3X3,
+  List,
+  MapPin,
+  Filter,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -71,6 +77,10 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
+  const [amountFilter, setAmountFilter] = useState("");
+  const [customMinAmount, setCustomMinAmount] = useState<number | undefined>(undefined);
+  const [customMaxAmount, setCustomMaxAmount] = useState<number | undefined>(undefined);
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>(
     undefined
   );
@@ -78,6 +88,8 @@ export default function HomePage() {
     undefined
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [showFilters, setShowFilters] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 0);
 
@@ -90,6 +102,10 @@ export default function HomePage() {
   } = useSelector((state: RootState) => state.invoices);
 
   useEffect(() => {
+    const savedViewMode = localStorage.getItem("invoiceViewMode");
+    if (savedViewMode) {
+      setViewMode(savedViewMode as "grid" | "list");
+    }
     const handleKeyDown = (e: KeyboardEvent) => {
       const active = document.activeElement;
       const isTyping =
@@ -149,13 +165,46 @@ export default function HomePage() {
       inv.invoice_number
         .toLowerCase()
         .includes(debouncedSearchTerm.toLowerCase()) ||
-      inv.to_name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+      inv.to_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
     // 2️⃣ Status filter
     const matchesStatus =
-      !statusFilter || inv.status.toLowerCase() === statusFilter.toLowerCase();
+      !statusFilter || inv.status?.toLowerCase() === statusFilter.toLowerCase();
 
-    // 3️⃣ Date filter
+    // 3️⃣ State filter (Inter/Intra)
+    const matchesState = (() => {
+      if (!stateFilter) return true;
+      if (stateFilter === "inter") return inv.is_inter_state === true;
+      if (stateFilter === "intra") return inv.is_inter_state === false;
+      return true;
+    })();
+
+    // 4️⃣ Amount filter
+    const matchesAmount = (() => {
+      if (!amountFilter) return true;
+      const invoiceTotal = inv.total || 0;
+
+      if (amountFilter === "under_10k") return invoiceTotal < 10000;
+      if (amountFilter === "10k_50k") return invoiceTotal >= 10000 && invoiceTotal <= 50000;
+      if (amountFilter === "50k_100k") return invoiceTotal >= 50000 && invoiceTotal <= 100000;
+      if (amountFilter === "above_100k") return invoiceTotal > 100000;
+      
+      if (amountFilter === "custom") {
+        if (customMinAmount !== undefined && customMaxAmount !== undefined) {
+          return invoiceTotal >= customMinAmount && invoiceTotal <= customMaxAmount;
+        }
+        if (customMinAmount !== undefined) {
+          return invoiceTotal >= customMinAmount;
+        }
+        if (customMaxAmount !== undefined) {
+          return invoiceTotal <= customMaxAmount;
+        }
+      }
+      
+      return true;
+    })();
+
+    // 5️⃣ Date filter
     const matchesDate = (() => {
       if (!dateFilter) return true;
 
@@ -220,16 +269,34 @@ export default function HomePage() {
       return true;
     })();
 
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesStatus && matchesState && matchesAmount && matchesDate;
   });
 
   const resetFilters = () => {
     setSearchTerm("");
     setDateFilter("");
     setStatusFilter("");
+    setStateFilter("");
+    setAmountFilter("");
+    setCustomMinAmount(undefined);
+    setCustomMaxAmount(undefined);
     setCustomStartDate(undefined);
     setCustomEndDate(undefined);
   };
+
+  // Count active filters
+  const activeFiltersCount = [
+    dateFilter,
+    statusFilter, 
+    stateFilter,
+    amountFilter,
+    customMinAmount,
+    customMaxAmount,
+    customStartDate,
+    customEndDate
+  ].filter(Boolean).length;
+
+  const hasActiveFilters = searchTerm || activeFiltersCount > 0;
 
   function getStatusClasses(status: string) {
     switch (status.toLowerCase()) {
@@ -309,6 +376,11 @@ export default function HomePage() {
     }
   }
 
+  const handleViewModeChange = (mode: "grid" | "list") => {
+    setViewMode(mode);
+    localStorage.setItem("invoiceViewMode", mode);
+  }
+
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
@@ -330,97 +402,281 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        {/* Left side: Search */}
-        <div className="w-full sm:max-w-sm relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input
-            ref={inputRef}
-            placeholder="Search by client or invoice number"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-20"
-          />
-          <Badge
-            variant="outline"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none"
-          >
-            /
-          </Badge>
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
-              aria-label="Clear search"
+      <div className="flex flex-col gap-4 mb-6 sticky top-18 bg-white z-10 p-2">
+        {/* Top row: Search and main controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Left side: Search */}
+          <div className="w-full sm:max-w-sm relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              ref={inputRef}
+              placeholder="Search by client or invoice number"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-20"
+            />
+            <Badge
+              variant="outline"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none"
             >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+              /
+            </Badge>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Right side: View Toggle and Filter Button */}
+          <div className="flex items-center gap-3">
+            {/* View Toggle */}
+            <div className="flex items-center border rounded-md">
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleViewModeChange("grid")}
+                className="rounded-r-none"
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleViewModeChange("list")}
+                className="rounded-l-none"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Filter Toggle Button */}
+            <Button
+              variant={hasActiveFilters ? "default" : "outline"}
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+              {showFilters ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </div>
 
-        {/* Right side: Filters */}
-        <div className="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
-          {/* Date Filter */}
-          <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Date filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="this_week">This Week</SelectItem>
-              <SelectItem value="this_month">This Month</SelectItem>
-              <SelectItem value="this_year">This Year</SelectItem>
-              <SelectItem value="custom">Custom</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {dateFilter === "custom" && (
-            <div className="flex items-center gap-2">
-              {/* Start Date */}
-              <div className="w-36">
-                <DatePicker
-                  selectedDate={customStartDate}
-                  onSelect={(date) => setCustomStartDate(date ?? undefined)}
-                />
+        {/* Filter Panel - Collapsible */}
+        {showFilters && (
+          <div className="border rounded-lg p-4 bg-muted/30">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* State Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">State Type</label>
+                <Select value={stateFilter} onValueChange={setStateFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All states" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inter">Inter State</SelectItem>
+                    <SelectItem value="intra">Intra State</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <span className="text-sm text-muted-foreground">-</span>
-              {/* End Date */}
-              <div className="w-36">
-                <DatePicker
-                  selectedDate={customEndDate}
-                  onSelect={(date) => setCustomEndDate(date ?? undefined)}
-                />
+
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Amount Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Amount Range</label>
+                <Select value={amountFilter} onValueChange={setAmountFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All amounts" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="under_10k">Under ₹10K</SelectItem>
+                    <SelectItem value="10k_50k">₹10K - ₹50K</SelectItem>
+                    <SelectItem value="50k_100k">₹50K - ₹1L</SelectItem>
+                    <SelectItem value="above_100k">Above ₹1L</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Date Range</label>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All dates" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="this_week">This Week</SelectItem>
+                    <SelectItem value="this_month">This Month</SelectItem>
+                    <SelectItem value="this_year">This Year</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          )}
 
-          {/* Status Filter */}
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Invoice status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="unpaid">Unpaid</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-            </SelectContent>
-          </Select>
+            {/* Custom Amount Range */}
+            {amountFilter === "custom" && (
+              <div className="mt-4 space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Custom Amount Range</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Min amount"
+                    value={customMinAmount || ""}
+                    onChange={(e) => setCustomMinAmount(e.target.value ? Number(e.target.value) : undefined)}
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-muted-foreground">to</span>
+                  <Input
+                    type="number"
+                    placeholder="Max amount"
+                    value={customMaxAmount || ""}
+                    onChange={(e) => setCustomMaxAmount(e.target.value ? Number(e.target.value) : undefined)}
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+            )}
 
-          {/* Reset Button */}
-          {(searchTerm ||
-            dateFilter ||
-            statusFilter ||
-            customStartDate ||
-            customEndDate) && (
-            <Button variant="destructive" onClick={resetFilters}>
-              Reset Filters
-            </Button>
-          )}
-        </div>
+            {/* Custom Date Range */}
+            {dateFilter === "custom" && (
+              <div className="mt-4 space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Custom Date Range</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <DatePicker
+                      selectedDate={customStartDate}
+                      onSelect={(date) => setCustomStartDate(date ?? undefined)}
+                    />
+                  </div>
+                  <span className="text-sm text-muted-foreground">to</span>
+                  <div className="flex-1">
+                    <DatePicker
+                      selectedDate={customEndDate}
+                      onSelect={(date) => setCustomEndDate(date ?? undefined)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reset Button */}
+            {hasActiveFilters && (
+              <div className="mt-4 flex justify-end">
+                <Button variant="outline" onClick={resetFilters} size="sm">
+                  <X className="w-4 h-4 mr-2" />
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Active Filters Summary */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground">Active filters:</span>
+            {searchTerm && (
+              <Badge variant="secondary" className="gap-1">
+                Search: {searchTerm}
+                <X 
+                  className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                  onClick={() => setSearchTerm("")}
+                />
+              </Badge>
+            )}
+            {stateFilter && (
+              <Badge variant="secondary" className="gap-1">
+                {stateFilter === "inter" ? "Inter State" : "Intra State"}
+                <X 
+                  className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                  onClick={() => setStateFilter("")}
+                />
+              </Badge>
+            )}
+            {statusFilter && (
+              <Badge variant="secondary" className="gap-1 capitalize">
+                {statusFilter}
+                <X 
+                  className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                  onClick={() => setStatusFilter("")}
+                />
+              </Badge>
+            )}
+            {amountFilter && (
+              <Badge variant="secondary" className="gap-1">
+                {amountFilter === "custom" 
+                  ? `₹${customMinAmount || 0} - ₹${customMaxAmount || "∞"}`
+                  : amountFilter === "under_10k" ? "Under ₹10K"
+                  : amountFilter === "10k_50k" ? "₹10K - ₹50K"
+                  : amountFilter === "50k_100k" ? "₹50K - ₹1L"
+                  : "Above ₹1L"
+                }
+                <X 
+                  className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                  onClick={() => {
+                    setAmountFilter("");
+                    setCustomMinAmount(undefined);
+                    setCustomMaxAmount(undefined);
+                  }}
+                />
+              </Badge>
+            )}
+            {dateFilter && (
+              <Badge variant="secondary" className="gap-1">
+                {dateFilter === "custom" 
+                  ? `${customStartDate?.toLocaleDateString()} - ${customEndDate?.toLocaleDateString()}`
+                  : dateFilter === "today" ? "Today"
+                  : dateFilter === "this_week" ? "This Week"
+                  : dateFilter === "this_month" ? "This Month"
+                  : "This Year"
+                }
+                <X 
+                  className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                  onClick={() => {
+                    setDateFilter("");
+                    setCustomStartDate(undefined);
+                    setCustomEndDate(undefined);
+                  }}
+                />
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       {invoiceLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
           {[...Array(6)].map((_, i) => (
             <Card key={i}>
               <CardContent className="p-4 space-y-4">
@@ -438,143 +694,320 @@ export default function HomePage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {filteredInvoices.map((inv) => (
-            <div
-              key={inv.id}
-              className="relative rounded-xl border bg-background shadow-sm hover:shadow-md transition-all duration-200"
-            >
-              {/* Header with Invoice No. and Status */}
-              <div className="flex justify-between items-center px-4 py-4 bg-blue-50 rounded-t-xl">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    #{inv.invoice_number}
-                  </span>
-                  {copiedId === inv.id ? (
-                    <Check className="h-4 text-green-500" />
-                  ) : (
-                    <Copy
-                      className="h-4 opacity-40 cursor-pointer hover:opacity-70"
-                      onClick={() => handleCopy(inv.invoice_number, inv.id)}
-                    />
-                  )}
+        <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" : "space-y-4"}>
+          {filteredInvoices.map((inv) => 
+            viewMode === "grid" ? (
+              <div
+                key={inv.id}
+                className="relative rounded-xl border bg-background shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                {/* Header with Invoice No. and Status */}
+                <div className="flex justify-between items-center px-4 py-4 bg-blue-50 rounded-t-xl">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      #{inv.invoice_number}
+                    </span>
+                    {copiedId === inv.id ? (
+                      <Check className="h-4 text-green-500" />
+                    ) : (
+                      <Copy
+                        className="h-4 opacity-40 cursor-pointer hover:opacity-70"
+                        onClick={() => {
+                          if (inv.invoice_number && inv.id) {
+                            if (inv.invoice_number && inv.id) {
+                              handleCopy(inv.invoice_number, inv.id ?? "");
+                            }
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`text-xs px-2 py-0.5 font-medium ${
+                        inv.is_inter_state 
+                          ? "bg-purple-50 text-purple-700 border-purple-200" 
+                          : "bg-blue-50 text-blue-700 border-blue-200"
+                      }`}
+                    >
+                      <MapPin className="w-3 h-3 mr-1" />
+                      {inv.is_inter_state ? "Inter State" : "Intra State"}
+                    </Badge>
+                    <Badge
+                      className={`capitalize text-xs px-2 py-0.5 font-medium ${getStatusClasses(
+                        inv.status ?? ""
+                      )}`}
+                    >
+                      {inv.status}
+                    </Badge>
+                  </div>
                 </div>
 
-                <Badge
-                  className={`capitalize text-xs px-2 py-0.5 font-medium ${getStatusClasses(
-                    inv.status
-                  )}`}
-                >
-                  {inv.status}
-                </Badge>
-              </div>
+                {/* Body */}
+                <Link href={`/invoice/${inv.id}/edit`}>
+                  <CardContent className="p-4 space-y-4">
+                    {/* Amount */}
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        AMOUNT
+                      </p>
+                      <p className="text-2xl font-bold">
+                        <Currency amount={inv.total} />
+                      </p>
+                    </div>
 
-              {/* Body */}
-              <Link href={`/invoice/${inv.id}/edit`}>
-                <CardContent className="p-4 space-y-4">
-                  {/* Amount */}
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">
-                      AMOUNT
-                    </p>
-                    <p className="text-2xl font-bold">
-                      <Currency amount={inv.total} />
-                    </p>
-                  </div>
+                    {/* Date */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CalendarDays className="w-4 h-4" />
+                      {new Date(inv.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </div>
 
-                  {/* Date */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CalendarDays className="w-4 h-4" />
-                    {new Date(inv.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </div>
+                    {/* Client */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <User2 className="w-4 h-4" />
+                      <span className="truncate">{inv.to_name}</span>
+                    </div>
+                  </CardContent>
+                </Link>
+                {/* Footer with actions */}
+                <div className="flex items-center justify-between border-t border-dashed px-4 py-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-sm p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (inv.id) {
+                        handleDownloadPDF(inv.id);
+                      }
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    Download
+                  </Button>
 
-                  {/* Client */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <User2 className="w-4 h-4" />
-                    <span className="truncate">{inv.to_name}</span>
-                  </div>
-                </CardContent>
-              </Link>
-              {/* Footer with actions */}
-              <div className="flex items-center justify-between border-t border-dashed px-4 py-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-sm p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownloadPDF(inv.id);
-                  }}
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Download
-                </Button>
-
-                {/* Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
+                  {/* Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <DropdownMenuItem
-                      onClick={() => handleShareInvoice(inv.public_id)}
-                      className="cursor-pointer"
-                    >
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Copy Public Link
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        setSendingEmail(inv.id);
-                        setEmailSent(null);
-                        try {
-                          await handleSendMail(inv.id);
-                          setEmailSent(inv.id);
-                          setTimeout(() => setEmailSent(null), 1000);
-                        } catch (err) {
-                          console.error("Mail sending failed:", err);
-                        } finally {
-                          setSendingEmail(null);
-                        }
-                      }}
-                      className="cursor-pointer"
-                    >
-                      {sendingEmail === inv.id ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : emailSent === inv.id ? (
-                        <Check className="mr-2 h-4 w-4 text-green-500" />
-                      ) : (
-                        <Mail className="mr-2 h-4 w-4" />
-                      )}
-                      Send Mail
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDeleteClick(inv.id)}
-                      disabled={deletingId === inv.id}
-                      className="text-destructive focus:text-destructive cursor-pointer"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (inv.public_id) handleShareInvoice(inv.public_id);
+                        }}
+                        className="cursor-pointer"
+                        disabled={!inv.public_id}
+                      >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Copy Public Link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          setSendingEmail(inv.id ?? null);
+                          setEmailSent(null);
+                          try {
+                            if (inv.id) {
+                              await handleSendMail(inv.id);
+                            }
+                            setEmailSent(inv.id ?? null);
+                            setTimeout(() => setEmailSent(null), 1000);
+                          } catch (err) {
+                            console.error("Mail sending failed:", err);
+                          } finally {
+                            setSendingEmail(null);
+                          }
+                        }}
+                        className="cursor-pointer"
+                      >
+                        {sendingEmail === inv.id ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : emailSent === inv.id ? (
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                        ) : (
+                          <Mail className="mr-2 h-4 w-4" />
+                        )}
+                        Send Mail
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => { if (inv.id) handleDeleteClick(inv.id); }}
+                        disabled={deletingId === inv.id}
+                        className="text-destructive focus:text-destructive cursor-pointer"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-            </div>
-          ))}
+            ) : (
+              <div
+                key={inv.id}
+                className="flex items-center justify-between p-4 border rounded-lg bg-background hover:shadow-md transition-all duration-200"
+              >
+                <Link href={`/invoice/${inv.id}/edit`} className="flex-1">
+                  <div className="flex items-center gap-6">
+                    {/* Invoice Number */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">#{inv.invoice_number}</span>
+                      {copiedId === inv.id ? (
+                        <Check className="h-4 text-green-500" />
+                      ) : (
+                        <Copy
+                          className="h-4 opacity-40 cursor-pointer hover:opacity-70"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (inv.id) handleCopy(inv.invoice_number, inv.id);
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    {/* Client */}
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <User2 className="w-4 h-4 text-muted-foreground" />
+                      <span className="truncate">{inv.to_name}</span>
+                    </div>
+
+                    {/* Date */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CalendarDays className="w-4 h-4" />
+                      {new Date(inv.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </div>
+
+                    {/* Amount */}
+                    <div className="text-right">
+                      <p className="text-lg font-bold">
+                        <Currency amount={inv.total} />
+                      </p>
+                    </div>
+
+                    {/* State Type & Status */}
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={`text-xs px-2 py-0.5 font-medium ${
+                          inv.is_inter_state 
+                            ? "bg-purple-50 text-purple-700 border-purple-200" 
+                            : "bg-blue-50 text-blue-700 border-blue-200"
+                        }`}
+                      >
+                        <MapPin className="w-3 h-3 mr-1" />
+                        {inv.is_inter_state ? "Inter" : "Intra"}
+                      </Badge>
+                      <Badge
+                        className={`capitalize text-xs px-2 py-0.5 font-medium ${getStatusClasses(
+                                                  inv.status ?? ""
+                                                )}`}
+                      >
+                        {inv.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (inv.id) {
+                        handleDownloadPDF(inv.id);
+                      }
+                    }}
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (inv.public_id) handleShareInvoice(inv.public_id);
+                        }}
+                        className="cursor-pointer"
+                        disabled={!inv.public_id}
+                      >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Copy Public Link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          setSendingEmail(inv.id ?? null);
+                          setEmailSent(null);
+                          try {
+                            if (inv.id) {
+                              await handleSendMail(inv.id);
+                              setEmailSent(inv.id);
+                              setTimeout(() => setEmailSent(null), 1000);
+                            }
+                          } catch (err) {
+                            console.error("Mail sending failed:", err);
+                          } finally {
+                            setSendingEmail(null);
+                          }
+                        }}
+                        className="cursor-pointer"
+                      >
+                        {sendingEmail === inv.id ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : emailSent === inv.id ? (
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                        ) : (
+                          <Mail className="mr-2 h-4 w-4" />
+                        )}
+                        Send Mail
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => { if (inv.id) handleDeleteClick(inv.id); }}
+                        disabled={deletingId === inv.id}
+                        className="text-destructive focus:text-destructive cursor-pointer"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            )
+          )}
         </div>
       )}
 

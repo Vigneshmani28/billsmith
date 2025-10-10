@@ -1,18 +1,18 @@
 import api from "@/lib/axios";
+import { InvoiceData } from "@/types/invoice";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { Invoice } from "./createInvoice";
 
 
 export const updateInvoice = createAsyncThunk(
   "invoice/updateInvoice",
-  async ({ id, data }: { id: string; data: Invoice }) => {
+  async ({ id, data }: { id: string; data: InvoiceData }) => {
     const response = await api.put(`/invoices/${id}`, data);
     return response.data.invoice;
   }
 );
 
 interface InvoiceState {
-  current: Invoice | null;
+  current: InvoiceData | null;
   loading: boolean;
   error: string | null;
 }
@@ -31,7 +31,7 @@ const invoiceSlice = createSlice({
       state.current = null;
       state.error = null;
     },
-    setInvoice(state, action: PayloadAction<Invoice>) {
+    setInvoice(state, action: PayloadAction<InvoiceData>) {
       state.current = action.payload;
     },
   },

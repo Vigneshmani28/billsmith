@@ -34,9 +34,16 @@ export const fetchInvoiceById = createAsyncThunk<
       date: data.date,
       from_name: data.from_name,
       from_email: data.from_email,
+      from_address : data.from_address,
+      from_phone : data.from_phone,
+      from_gstin : data.from_gstin,
+      from_pan : data.from_pan,
       to_name: data.to_name,
       to_email: data.to_email,
       to_address: data.to_address,
+      to_phone : data.to_phone,
+      to_gstin : data.to_gstin,
+      to_pan : data.to_pan,
       status: data.status,
       items: data.items,
       tax_rate: data.tax_rate,
@@ -47,6 +54,7 @@ export const fetchInvoiceById = createAsyncThunk<
       public_id: data.public_id,
       created_at: data.created_at,
       updated_at: data.updated_at,
+      is_inter_state: false
     };
 
     return invoice;

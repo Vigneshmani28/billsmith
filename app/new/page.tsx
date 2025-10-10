@@ -27,7 +27,7 @@ export default function NewInvoicePage() {
   if (loading) return <ContentLoader />;
 
   if (!user) {
-    router.push("/sign-in");
+    router.push("/login");
     return null;
   }
 

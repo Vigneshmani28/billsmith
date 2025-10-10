@@ -3,7 +3,7 @@
 import { useCurrency } from "@/context/currency-context";
 
 type CurrencyProps = {
-  amount: number;
+  amount: number | undefined;
 };
 
 export const Currency = ({ amount }: CurrencyProps) => {
@@ -11,7 +11,7 @@ export const Currency = ({ amount }: CurrencyProps) => {
 
   return (
     <span>
-      {new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount)}
+      {new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount ?? 0)}
     </span>
   );
 };

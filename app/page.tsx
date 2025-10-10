@@ -62,7 +62,7 @@ const Dashboard = () => {
   // Process data for visualizations
   const statusCounts = invoices.reduce(
     (acc, invoice) => {
-      const status = invoice.status.toLowerCase();
+      const status = invoice.status?.toLowerCase();
       if (status === "paid") acc.paid += 1;
       else if (status === "unpaid") acc.unpaid += 1;
       else if (status === "overdue") acc.overdue += 1;
@@ -81,12 +81,12 @@ const Dashboard = () => {
 
   // Calculate financial metrics
   const totalRevenue = invoices
-    .filter((inv) => inv.status.toLowerCase() === "paid")
-    .reduce((sum, inv) => sum + inv.total, 0);
+    .filter((inv) => inv.status && inv.status.toLowerCase() === "paid")
+    .reduce((sum, inv) => sum + (inv.total ?? 0), 0);
 
   const outstandingAmount = invoices
-    .filter((inv) => ["unpaid", "overdue"].includes(inv.status.toLowerCase()))
-    .reduce((sum, inv) => sum + inv.total, 0);
+    .filter((inv) => inv.status && ["unpaid", "overdue"].includes(inv.status.toLowerCase()))
+    .reduce((sum, inv) => sum + (inv.total ?? 0), 0);
 
   // Monthly data for bar chart
   const validStatuses = ["paid", "unpaid", "overdue"] as const;
@@ -94,7 +94,7 @@ const Dashboard = () => {
 
   const monthlyData = invoices.reduce((acc, invoice) => {
     const month = format(new Date(invoice.date), "MMM yyyy");
-    const status = invoice.status.toLowerCase();
+    const status = invoice.status ? invoice.status.toLowerCase() : "";
 
     if (!acc[month]) {
       acc[month] = {
@@ -112,7 +112,7 @@ const Dashboard = () => {
     }
 
     if (status === "paid") {
-      acc[month].revenue += invoice.total;
+      acc[month].revenue += invoice.total ?? 0;
     }
 
     return acc;
@@ -284,7 +284,7 @@ const Dashboard = () => {
               </Button>
             </div>
           ) : invoices.filter((inv) =>
-              ["unpaid", "overdue"].includes(inv.status.toLowerCase())
+              inv.status && ["unpaid", "overdue"].includes(inv.status.toLowerCase())
             ).length === 0 ? (
             // All invoices are paid
             <div className="flex flex-col items-center justify-center h-32 rounded-xl p-4">
@@ -298,59 +298,81 @@ const Dashboard = () => {
             </div>
           ) : (
             // Show pending invoices
-            <div className="divide-y divide-gray-200 dark:divide-gray-800">
-              {invoices
+            (() => {
+              const pendingInvoices = invoices
                 .filter((inv) =>
-                  ["unpaid", "overdue"].includes(inv.status.toLowerCase())
+                  inv.status && ["unpaid", "overdue"].includes(inv.status.toLowerCase())
                 )
                 .sort(
                   (a, b) =>
                     new Date(b.date).getTime() - new Date(a.date).getTime()
-                )
-                .slice(0, 5)
-                .map((invoice) => (
-                  <Link
-                    href={`/invoice/${invoice.id}/edit`}
-                    key={invoice.id}
-                    className="flex flex-wrap sm:flex-nowrap items-start justify-between gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                  >
-                    {/* Left: User + Invoice Info */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300">
-                        {invoice.to_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                          {invoice.to_name}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          #{invoice.invoice_number} •{" "}
-                          {format(new Date(invoice.date), "MMM dd, yyyy")}
-                        </div>
-                      </div>
-                    </div>
+                );
+              
+              const displayedInvoices = pendingInvoices.slice(0, 5);
+              const remainingCount = pendingInvoices.length - 5;
 
-                    {/* Right: Amount + Status */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                      <div className="text-right min-w-0">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                          <Currency amount={invoice.total} />
+              return (
+                <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {displayedInvoices.map((invoice) => (
+                    <Link
+                      href={`/invoice/${invoice.id}/edit`}
+                      key={invoice.id}
+                      className="flex flex-wrap sm:flex-nowrap items-start justify-between gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                    >
+                      {/* Left: User + Invoice Info */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          {(invoice.to_name?.charAt(0)?.toUpperCase() ?? "U")}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {invoice.to_email}
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            {invoice.to_name}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            #{invoice.invoice_number} •{" "}
+                            {format(new Date(invoice.date), "MMM dd, yyyy")}
+                          </div>
                         </div>
                       </div>
-                      <Badge
-                        className={`capitalize text-xs px-2 py-0.5 font-medium mt-1 sm:mt-0 ${getStatusClasses(
-                          invoice.status
-                        )}`}
-                      >
-                        {invoice.status}
-                      </Badge>
+
+                      {/* Right: Amount + Status */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+                        <div className="text-right min-w-0">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                            <Currency amount={invoice.total} />
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {invoice.to_email}
+                          </div>
+                        </div>
+                        <Badge
+                          className={`capitalize text-xs px-2 py-0.5 font-medium mt-1 sm:mt-0 ${getStatusClasses(
+                            invoice.status ?? ""
+                          )}`}
+                        >
+                          {invoice.status}
+                        </Badge>
+                      </div>
+                    </Link>
+                  ))}
+                  
+                  {remainingCount > 0 && (
+                    <div className="px-4 py-3 text-center border-t border-gray-100 dark:border-gray-800">
+                      <Link href="/invoices">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700"
+                        >
+                          + {remainingCount} more pending invoice{remainingCount !== 1 ? 's' : ''}
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </Link>
                     </div>
-                  </Link>
-                ))}
-            </div>
+                  )}
+                </div>
+              );
+            })()
           )}
         </CardContent>
       </Card>
@@ -440,7 +462,7 @@ const Dashboard = () => {
                       <div className="flex-shrink-0">
                         <Badge
                           className={`capitalize text-xs px-2 py-0.5 font-medium ${getStatusClasses(
-                            invoice.status
+                            invoice.status ?? ""
                           )}`}
                         >
                           {invoice.status}

@@ -35,6 +35,41 @@ export default function InvoicePreview({
   const { loading } = useSelector((state: RootState) => state.createInvoice);
   const router = useRouter();
 
+  // Check if both parties are in same state based on GSTIN prefix
+  const isSameState = (() => {
+    const fromGstin = invoice.from_gstin || "";
+    const toGstin = invoice.to_gstin || "";
+
+    if (fromGstin.length >= 2 && toGstin.length >= 2) {
+      return fromGstin.substring(0, 2) === toGstin.substring(0, 2);
+    }
+    return false;
+  })();
+
+  // Calculate tax breakdown
+  const taxBreakdown = (() => {
+    const taxRate = typeof invoice.tax_rate === "number" ? invoice.tax_rate : 0;
+    const taxAmount = invoice.tax_amount || 0;
+
+    if (isSameState) {
+      // Split between CGST and SGST (each gets half)
+      const cgst = taxAmount / 2;
+      const sgst = taxAmount / 2;
+      return {
+        cgst: { rate: taxRate / 2, amount: cgst },
+        sgst: { rate: taxRate / 2, amount: sgst },
+        igst: { rate: 0, amount: 0 },
+      };
+    } else {
+      // All tax goes to IGST
+      return {
+        cgst: { rate: 0, amount: 0 },
+        sgst: { rate: 0, amount: 0 },
+        igst: { rate: taxRate, amount: taxAmount },
+      };
+    }
+  })();
+
   const servicesPerColumn = Math.ceil(Services.length / 3);
   const servicesColumns = [
     Services.slice(0, servicesPerColumn),
@@ -48,22 +83,47 @@ export default function InvoicePreview({
 
   const handleSaveInvoice = async () => {
     try {
+      // Check if both parties are in same state based on GSTIN prefix
+      const fromGstin = invoice.from_gstin || "";
+      const toGstin = invoice.to_gstin || "";
+      const isInterState =
+        fromGstin.length >= 2 && toGstin.length >= 2
+          ? fromGstin.substring(0, 2) !== toGstin.substring(0, 2)
+          : false;
+
       const payload = {
         invoice_number: invoice.invoice_number,
         date: invoice.date,
-        from_name: invoice.from_name,
-        from_email: invoice.from_email,
-        to_name: invoice.to_name,
-        to_email: invoice.to_email,
-        to_address: invoice.to_address,
         tax_rate: Number(invoice.tax_rate),
         discount: Number(invoice.discount),
+        is_inter_state: isInterState,
         items: invoice.items.map((item) => ({
           description: item.description,
           quantity: Number(item.quantity),
           rate: Number(item.rate),
         })),
+        ...Object.fromEntries(
+          Object.entries({
+            from_name: invoice.from_name,
+            from_email: invoice.from_email,
+            from_address: invoice.from_address,
+            from_phone: invoice.from_phone,
+            from_gstin: invoice.from_gstin,
+            from_pan: invoice.from_pan,
+            to_name: invoice.to_name,
+            to_email: invoice.to_email,
+            to_address: invoice.to_address,
+            to_phone: invoice.to_phone,
+            to_gstin: invoice.to_gstin,
+            to_pan: invoice.to_pan,
+          }).filter(
+            ([_, value]) =>
+              value !== undefined && value !== null && value !== ""
+          )
+        ),
       };
+
+      console.log("Saving invoice with payload:", payload);
 
       const response = await dispatch(
         createInvoice({ data: payload })
@@ -137,22 +197,28 @@ export default function InvoicePreview({
             {/* Header */}
             <div className="flex justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold">{OwnerInfo.name}</h2>
-                <p className="text-sm font-semibold">PAN - {OwnerInfo.pan}</p>
+                <h2 className="text-xl font-bold">
+                  {invoice.from_name}
+                </h2>
+                <p className="text-sm font-semibold">
+                  PAN - {invoice.from_pan}
+                </p>
                 <p className="text-sm">
-                  Office Branches - {OwnerInfo.office_braches}
+                  GSTIN - {invoice.from_gstin}
                 </p>
               </div>
               <div className="text-right text-sm">
-                <p className="font-semibold">Head Office:</p>
-                <p>Door No - {OwnerInfo.head_office.door_no},</p>
-                <p>{OwnerInfo.head_office.address},</p>
-                <p>{OwnerInfo.head_office.city}.</p>
+                <p className="font-semibold">From:</p>
+                <p>
+                  {invoice.from_address}
+                </p>
+                <p>{invoice.from_phone}</p>
+                <p>{invoice.from_email}</p>
               </div>
             </div>
 
             {/* INVOICE Header Section with Yellow Bands */}
-            <div className="relative mb-8 h-28 w-full">
+            <div className="relative h-28 w-full">
               <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full flex items-center">
                 <div className="h-12 flex-1 bg-yellow-400" />
                 <h2 className="text-4xl font-bold tracking-widest text-black px-6 whitespace-nowrap">
@@ -168,9 +234,11 @@ export default function InvoicePreview({
                 <h3 className="font-semibold">Invoice to:</h3>
                 <p className="font-medium">{invoice.to_name}</p>
                 <p>{invoice.to_email}</p>
+                <p>{invoice.to_phone}</p>
+                <p>{invoice.to_gstin}</p>
+                <p>{invoice.to_pan}</p>
                 <p>
-                  {invoice.to_address ||
-                    "23, first street, Nangooram Nagar, Guduvanchery - 603202"}
+                  {invoice.to_address}
                 </p>
               </div>
               <div className="text-sm text-right">
@@ -189,11 +257,11 @@ export default function InvoicePreview({
             <table className="w-full mb-8 border">
               <thead>
                 <tr className="bg-gray-200 text-left text-sm font-medium">
-                  <th className="p-2 border text-center">SL.</th>
-                  <th className="p-2 border text-center">Item Description</th>
-                  <th className="p-2 border text-center">Price</th>
-                  <th className="p-2 border text-center">Qty</th>
-                  <th className="p-2 border text-center">Total</th>
+                  <th className="p-2 border text-left">SL.</th>
+                  <th className="p-2 border text-left">Item Description</th>
+                  <th className="p-2 border text-left">Price</th>
+                  <th className="p-2 border text-left">Qty</th>
+                  <th className="p-2 border text-left">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,11 +271,11 @@ export default function InvoicePreview({
                       {String(index + 1).padStart(2, "0")}
                     </td>
                     <td className="p-2 border">{item.description}</td>
-                    <td className="p-2 border text-right">
+                    <td className="p-2 border text-left">
                       {Number(item.rate).toFixed(2)}
                     </td>
-                    <td className="p-2 border text-center">{item.quantity}</td>
-                    <td className="p-2 border text-right">
+                    <td className="p-2 border text-left">{item.quantity}</td>
+                    <td className="p-2 border text-left">
                       {Number(item.amount).toFixed(2)}
                     </td>
                   </tr>
@@ -225,7 +293,7 @@ export default function InvoicePreview({
                 </p>
                 <p>
                   <span className="font-semibold">A/C Name:</span>{" "}
-                  {OwnerInfo.bank_account.account_name}
+                  {invoice.from_name || OwnerInfo.bank_account.account_name}
                 </p>
                 <p>
                   <span className="font-semibold">Bank Details:</span>{" "}
@@ -239,7 +307,9 @@ export default function InvoicePreview({
               <div className="w-64 text-sm space-y-2">
                 <div className="flex justify-between">
                   <span>Sub Total:</span>
-                  <span><Currency amount={invoice.subtotal} /></span>
+                  <span>
+                    <Currency amount={invoice.subtotal} />
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Discount:</span>
@@ -247,13 +317,36 @@ export default function InvoicePreview({
                     -<Currency amount={Number(invoice.discount)} />
                   </span>
                 </div>
-                <div className="flex justify-between bg-yellow-300 font-semibold px-2 py-1 rounded">
-                  <span>Tax: ({invoice.tax_rate}%)</span>
-                  <span><Currency amount={invoice.tax_amount} /></span>
-                </div>
+
+                {isSameState ? (
+                  <>
+                    <div className="flex justify-between font-semibold px-2 py-1 rounded">
+                      <span>CGST ({taxBreakdown.cgst.rate.toFixed(1)}%):</span>
+                      <span>
+                        <Currency amount={taxBreakdown.cgst.amount} />
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-semibold px-2 py-1 rounded">
+                      <span>SGST ({taxBreakdown.sgst.rate.toFixed(1)}%):</span>
+                      <span>
+                        <Currency amount={taxBreakdown.sgst.amount} />
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between font-semibold px-2 py-1 rounded">
+                    <span>IGST ({taxBreakdown.igst.rate.toFixed(1)}%):</span>
+                    <span>
+                      <Currency amount={taxBreakdown.igst.amount} />
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total:</span>
-                  <span><Currency amount={invoice.total} /></span>
+                  <span>
+                    <Currency amount={invoice.total} />
+                  </span>
                 </div>
               </div>
             </div>
@@ -279,8 +372,8 @@ export default function InvoicePreview({
             {/* Footer */}
             <div className="flex justify-between items-start text-xs">
               <div>
-                <p className="font-semibold">+91 9566135117</p>
-                <p>{OwnerInfo.email}</p>
+                <p className="font-semibold">{invoice.from_phone || "+91 9566135117"}</p>
+                <p>{invoice.from_email || OwnerInfo.email}</p>
               </div>
               <div className="italic text-center text-blue-700">
                 <p>"A day without laughter is a day wasted."</p>
