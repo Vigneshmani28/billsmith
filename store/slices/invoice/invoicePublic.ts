@@ -46,6 +46,7 @@ export const fetchInvoiceByPublicId = createAsyncThunk<
       public_id: data.public_id,
       created_at: data.created_at,
       updated_at: data.updated_at,
+      is_inter_state: false
     };
 
     return invoice;
