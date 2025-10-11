@@ -35,7 +35,10 @@ export default function InvoiceItem({
 
   const handleQuantityBlur = () => {
     // If empty on blur, set to 1
-    if (item.quantity === "" || item.quantity === 0) {
+    if (
+      (typeof item.quantity === "string" && item.quantity === "") ||
+      (typeof item.quantity === "number" && item.quantity === 0)
+    ) {
       updateItem(index, "quantity", 1);
     }
   };
@@ -53,8 +56,8 @@ export default function InvoiceItem({
   };
 
   const handleRateBlur = () => {
-    // If empty on blur, set to 0
-    if (item.rate === "") {
+    // If rate is not a valid number, set to 0
+    if (item.rate === undefined || item.rate === null || isNaN(Number(item.rate))) {
       updateItem(index, "rate", 0);
     }
   };
