@@ -150,7 +150,7 @@ export const generatePDF = (invoice: InvoiceData) => {
       // Subtotal
       doc.setFont("Helvetica", "bold");
       doc.text("Sub Total :", 150, currentY, { align: "right" });
-      doc.text(`${invoice.subtotal.toLocaleString()}`, 190, currentY, {
+      doc.text(`${(invoice.subtotal ?? 0).toLocaleString()}`, 190, currentY, {
         align: "right",
       });
       currentY += 6;
@@ -186,7 +186,7 @@ export const generatePDF = (invoice: InvoiceData) => {
       doc.setFontSize(13);
       doc.setFont("Helvetica", "bold");
       doc.text("Total :", 150, currentY, { align: "right" });
-      doc.text(`${invoice.total.toLocaleString()}`, 190, currentY, {
+      doc.text(`${(invoice.total ?? 0).toLocaleString()}`, 190, currentY, {
         align: "right",
       });
     }
