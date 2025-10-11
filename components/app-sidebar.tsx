@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   LogOut,
   ReceiptText,
+  Calculator,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -35,6 +36,11 @@ export function AppSidebar() {
       label: "Invoices",
       href: "/invoices",
       icon: FileText,
+    },
+    {
+      label: "GSTR-1",
+      href: "/gstr1",
+      icon: Calculator,
     },
   ];
 

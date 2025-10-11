@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { useInvoice } from "@/context/invoice-context";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function BasicDetails() {
   const { invoice, updateInvoice } = useInvoice();
@@ -15,10 +15,18 @@ export default function BasicDetails() {
     invoice.date ? new Date(invoice.date) : undefined
   );
 
+  useEffect(() => {
+    if (invoice.date) {
+      setDate(new Date(invoice.date));
+    } else {
+      setDate(undefined);
+    }
+  }, [invoice.date]);
+
   const handleDateSelect = (selected: Date | undefined) => {
     setDate(selected);
     if (selected) {
-      updateInvoice({ date: format(selected, "yyyy-MM-dd") }); // store in ISO format
+      updateInvoice({ date: format(selected, "yyyy-MM-dd") }); // always store in YYYY-MM-DD
     }
   };
 
@@ -68,3 +76,4 @@ export default function BasicDetails() {
     </Card>
   );
 }
+

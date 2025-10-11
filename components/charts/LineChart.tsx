@@ -1,24 +1,23 @@
 "use client";
 import React from "react";
 import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+  VictoryChart,
+  VictoryLine,
+  VictoryAxis,
+  VictoryTheme,
+  VictoryTooltip,
+  VictoryVoronoiContainer,
+  VictoryLegend,
+  VictoryGroup
+} from "victory";
 
 type MonthlyChartData = {
     month: string;
     paid: number;
     unpaid: number;
-    partial: number;
     overdue: number;
     revenue: number;
-}[]
+}[];
 
 const MemoizedLineChart = React.memo(({ data }: { data: MonthlyChartData }) => {
   const hasRevenueData = data.filter((m) => m.revenue > 0).length > 0;
@@ -29,26 +28,64 @@ const MemoizedLineChart = React.memo(({ data }: { data: MonthlyChartData }) => {
       </div>
     );
 
+  // Format data for Victory (Victory expects x/y keys)
+  const revenueData = data.map((d) => ({
+    x: d.month,
+    y: d.revenue,
+    label: `₹${d.revenue.toLocaleString()}`
+  }));
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
-        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-        <XAxis dataKey="month" angle={-45} textAnchor="end" height={60} />
-        <YAxis />
-        <Tooltip
-          formatter={(value: number) => [`₹${value.toLocaleString()}`, "Revenue"]}
+    <div style={{ width: "100%", height: 350 }}>
+      <VictoryChart
+        theme={VictoryTheme.material}
+        domainPadding={{ x: 30, y: 20 }}
+        padding={{ top: 40, bottom: 60, left: 60, right: 30 }}
+        containerComponent={
+          <VictoryVoronoiContainer
+            labels={({ datum }) => datum.label}
+            labelComponent={
+              <VictoryTooltip
+                style={{ fontSize: 14 }}
+                flyoutPadding={10}
+                cornerRadius={6}
+                flyoutStyle={{ fill: "white" }}
+              />
+            }
+          />
+        }
+      >
+        <VictoryAxis
+          tickFormat={(m) => m}
+          style={{
+            tickLabels: { angle: -45, textAnchor: "end", fontSize: 12, padding: 10 }
+          }}
         />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="revenue"
-          stroke="#3B82F6"
-          strokeWidth={2}
-          activeDot={{ r: 8 }}
-          name="Revenue"
+        <VictoryAxis
+          dependentAxis
+          style={{
+            tickLabels: { fontSize: 12, padding: 5 }
+          }}
         />
-      </LineChart>
-    </ResponsiveContainer>
+        <VictoryLegend
+          x={100}
+          y={10}
+          orientation="horizontal"
+          gutter={20}
+          data={[{ name: "Revenue", symbol: { fill: "#3B82F6" } }]}
+        />
+        <VictoryGroup>
+          <VictoryLine
+            data={revenueData}
+            interpolation="monotoneX"
+            style={{
+              data: { stroke: "#3B82F6", strokeWidth: 2 }
+            }}
+            animate={{ duration: 700 }}
+          />
+        </VictoryGroup>
+      </VictoryChart>
+    </div>
   );
 });
 

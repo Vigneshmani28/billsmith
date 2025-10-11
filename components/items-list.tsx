@@ -29,11 +29,18 @@ export default function ItemsList() {
             canRemove={invoice.items.length > 1}
           />
         ))}
-        <div  className="flex justify-end">
-        <Button onClick={addItem} size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Item
-        </Button>
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            💡 Press{" "}
+            <kbd className="px-2 py-1 text-xs bg-gray-100 border rounded">
+              Enter
+            </kbd>{" "}
+            to add new item
+          </p>
+          <Button onClick={addItem} size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Item
+          </Button>
         </div>
       </CardContent>
     </Card>

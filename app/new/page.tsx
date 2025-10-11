@@ -5,28 +5,29 @@ import InvoicePreview from "@/components/invoice-preview";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { ContentLoader } from "@/components/loader";
 import { useInvoice } from "@/context/invoice-context";
 import { initialInvoiceData } from "@/lib/constants";
+import { useAuth } from "@/context/auth-context";
 
 export default function NewInvoicePage() {
   const [showPreview, setShowPreview] = useState(false);
-  const { userId, isLoaded } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
-  const {setFullInvoice} = useInvoice();
+  const { setFullInvoice } = useInvoice();
 
   useEffect(() => {
-    if(isLoaded && userId) {
-      console.log("setting initial invoice data");
-      setFullInvoice(initialInvoiceData)
+    if (!loading && user?._id) {
+      console.log("Setting initial invoice data");
+      setFullInvoice(initialInvoiceData);
     }
-  }, [isLoaded, userId])
+  }, [loading, user]);
 
-  if (!isLoaded) return <ContentLoader />;
-  if (!userId) {
-    router.push("/sign-in");
+  if (loading) return <ContentLoader />;
+
+  if (!user) {
+    router.push("/login");
     return null;
   }
 
@@ -34,6 +35,7 @@ export default function NewInvoicePage() {
     return <InvoicePreview onBack={() => setShowPreview(false)} />;
   }
 
+  // Default form view
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto">

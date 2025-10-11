@@ -4,6 +4,8 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import type { InvoiceItem as InvoiceItemType } from "../types/invoice";
 import { useInvoice } from "@/context/invoice-context";
+import { useCurrency } from "@/context/currency-context";
+import { Currency } from "./Currency";
 
 interface InvoiceItemProps {
   item: InvoiceItemType;
@@ -17,6 +19,7 @@ export default function InvoiceItem({
   canRemove,
 }: InvoiceItemProps) {
   const { removeItem, updateItem } = useInvoice();
+  const { currency} = useCurrency();
 
   const handleQuantityChange = (value: string) => {
     // Allow empty string temporarily, but convert to number for calculations
@@ -57,52 +60,62 @@ export default function InvoiceItem({
   };
 
   return (
-    <div className="grid grid-cols-12 gap-4 p-4 border rounded-lg">
-      <div className="col-span-5">
-        <Label>Description</Label>
-        <Input
-          placeholder="Item description"
-          value={item.description}
-          onChange={(e) => updateItem(index, "description", e.target.value)}
-        />
-      </div>
-      <div className="col-span-2">
-        <Label>Quantity</Label>
-        <Input
-          type="number"
-          min="1"
-          value={item.quantity}
-          onChange={(e) => handleQuantityChange(e.target.value)}
-          onBlur={handleQuantityBlur}
-        />
-      </div>
-      <div className="col-span-2">
-        <Label>Rate (₹)</Label>
-        <Input
-          type="number"
-          min="0"
-          step="0.01"
-          value={item.rate}
-          onChange={(e) => handleRateChange(e.target.value)}
-          onBlur={handleRateBlur}
-        />
-      </div>
-      <div className="col-span-2">
-        <Label>Amount</Label>
-        <div className="h-10 px-3 py-2 bg-gray-50 border rounded-md flex items-center">
-          &#8377;{typeof item.amount === "number" ? item.amount.toFixed(2) : "0.00"}
-        </div>
-      </div>
-      <div className="col-span-1 flex items-end cursor-pointer">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => removeItem(index)}
-          disabled={!canRemove}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 border rounded-lg">
+  {/* Description: full width on mobile, 5/12 on sm+ */}
+  <div className="sm:col-span-5">
+    <Label>Description</Label>
+    <Input
+      placeholder="Item description"
+      value={item.description}
+      onChange={(e) => updateItem(index, "description", e.target.value)}
+    />
+  </div>
+
+  {/* Quantity */}
+  <div className="sm:col-span-2">
+    <Label>Quantity</Label>
+    <Input
+      type="number"
+      min="1"
+      value={item.quantity}
+      onChange={(e) => handleQuantityChange(e.target.value)}
+      onBlur={handleQuantityBlur}
+    />
+  </div>
+
+  {/* Rate */}
+  <div className="sm:col-span-2">
+    <Label>Rate ({currency})</Label>
+    <Input
+      type="number"
+      min="0"
+      step="0.01"
+      value={item.rate}
+      onChange={(e) => handleRateChange(e.target.value)}
+      onBlur={handleRateBlur}
+    />
+  </div>
+
+  {/* Amount */}
+  <div className="sm:col-span-2">
+    <Label>Amount</Label>
+    <div className="h-10 px-3 py-2 bg-gray-50 border rounded-md flex items-center">
+      <Currency amount={item.amount} />
     </div>
+  </div>
+
+  {/* Remove button */}
+  <div className="flex items-end">
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={() => removeItem(index)}
+      disabled={!canRemove}
+    >
+      <Trash2 className="w-4 h-4" />
+    </Button>
+  </div>
+</div>
+
   );
 }

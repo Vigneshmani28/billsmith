@@ -21,7 +21,6 @@ const badgeVariants = cva(
         // ✅ Custom status variants
         paid: "bg-green-500 text-white hover:bg-green-600",
         unpaid: "bg-red-500 text-white hover:bg-red-600",
-        partial: "bg-yellow-400 text-black hover:bg-yellow-500",
         overdue: "bg-orange-500 text-white hover:bg-orange-600",
       },
     },

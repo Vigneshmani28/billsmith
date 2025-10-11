@@ -1,15 +1,30 @@
 "use client";
 
-import React from "react";
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import React, { useMemo } from "react";
+import { VictoryPie, VictoryTooltip } from "victory";
 
 type StatusData = {
-    name: string;
-    value: number;
-    color: string;
-}[]
+  name: string;
+  value: number;
+  color: string;
+}[];
 
-const MemoizedPieChart = React.memo(({ data }: { data: StatusData }) => {
+interface PieChartProps {
+  data: StatusData;
+}
+
+const MemoizedPieChart: React.FC<PieChartProps> = React.memo(({ data }) => {
+  const chartData = useMemo(
+    () =>
+      data.map(d => ({
+        x: d.name,
+        y: d.value,
+        label: `${d.name}: ${d.value}`,
+        fill: d.color,
+      })),
+    [data]
+  );
+
   if (data.length === 0)
     return (
       <div className="flex h-full items-center justify-center text-gray-500">
@@ -18,26 +33,19 @@ const MemoizedPieChart = React.memo(({ data }: { data: StatusData }) => {
     );
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={80}
-          paddingAngle={5}
-          dataKey="value"
-          label={({ name, percent }) => `${name}: ${(Number(percent) * 100).toFixed(0)}%`}
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value: number) => [`${value} invoices`, "Count"]} />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="flex justify-center items-center h-full">
+      <VictoryPie
+        data={chartData}
+        innerRadius={60}
+        labels={({ datum }) => datum.label}
+        labelComponent={<VictoryTooltip />}
+        colorScale={data.map(d => d.color)}
+        animate={{ duration: 300 }}
+        style={{
+          labels: { fontSize: 12, fill: "#333" },
+        }}
+      />
+    </div>
   );
 });
 
