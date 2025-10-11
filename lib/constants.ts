@@ -14,5 +14,6 @@ export const initialInvoiceData: InvoiceData = {
   subtotal: 0,
   tax_amount: 0,
   total: 0,
-  discount: 0
+  discount: 0,
+  is_inter_state: false
 }
