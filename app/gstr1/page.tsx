@@ -15,26 +15,6 @@ import { format } from 'date-fns'
 import { fetchInvoices } from '@/store/slices/invoice/invoiceSlice'
 import { AppDispatch, RootState } from '@/store/store'
 import { InvoiceData } from '@/types/invoice'
-
-interface Invoice {
-  id: string
-  invoice_number: string
-  date: string
-  from_gstin: string
-  to_gstin: string
-  is_inter_state: boolean
-  subtotal: number
-  tax_amount: number
-  total: number
-  tax_rate: number
-  items: Array<{
-    description: string
-    quantity: number
-    rate: number
-    amount: number
-  }>
-}
-
 interface GSTR1Summary {
   b2b: {
     invoices: number

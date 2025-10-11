@@ -10,7 +10,6 @@ import { fetchInvoiceByPublicId } from "@/store/slices/invoice/invoicePublic";
 
 export default function PublicInvoicePage() {
   const { publicId } = useParams();
-  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
   const { invoice, loading, error } = useSelector(
