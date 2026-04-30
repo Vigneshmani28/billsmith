@@ -68,77 +68,77 @@ export default function LoginPage() {
   }
 
   return (
-      <Card className="w-full max-w-md shadow-lg rounded-xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome Back
-          </CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            Sign in to access your dashboard
-          </p>
-        </CardHeader>
+    <Card className="w-full max-w-md shadow-lg rounded-xl">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+          Welcome Back
+        </CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">
+          Sign in to access your dashboard
+        </p>
+      </CardHeader>
 
-        <CardContent className="mt-4">
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="flex flex-col">
-              <Label
-                htmlFor="identifier"
-                className="text-gray-700 dark:text-gray-300"
-              >
-                Email or Username
-              </Label>
-              <Input
-                id="identifier"
-                type="text"
-                placeholder="you@example.com or username"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <Label
-                htmlFor="password"
-                className="text-gray-700 dark:text-gray-300"
-              >
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full mt-2"
-              disabled={isSubmitting}
+      <CardContent className="mt-4">
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="flex flex-col">
+            <Label
+              htmlFor="identifier"
+              className="text-gray-700 dark:text-gray-300"
             >
-              {isSubmitting ? (
-                <Loader2 className="animate-spin h-4 w-4 mr-2 text-white inline-block" />
-              ) : null}
-              {isSubmitting ? "Signing In..." : "Sign In"}
-            </Button>
+              Email or Username
+            </Label>
+            <Input
+              id="identifier"
+              type="text"
+              placeholder="you@example.com or username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              className="mt-1"
+              required
+            />
+          </div>
 
-            <Separator />
+          <div className="flex flex-col">
+            <Label
+              htmlFor="password"
+              className="text-gray-700 dark:text-gray-300"
+            >
+              Password
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1"
+              required
+            />
+          </div>
 
-            <div className="text-sm text-center">
+          <Button
+            type="submit"
+            className="w-full mt-2"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <Loader2 className="animate-spin h-4 w-4 mr-2 text-white inline-block" />
+            ) : null}
+            {isSubmitting ? "Signing In..." : "Sign In"}
+          </Button>
+
+          <Separator />
+
+          {/* <div className="text-sm text-center">
               <Link
                 href="/forgot-password"
                 className="text-primary hover:underline"
               >
                 Forgot Password?
               </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </div> */}
+        </form>
+      </CardContent>
+    </Card>
   );
 }
