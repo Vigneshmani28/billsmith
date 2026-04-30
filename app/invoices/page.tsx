@@ -63,6 +63,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { deleteInvoice } from "@/store/slices/invoice/deleteInvoice";
 import { fetchInvoiceById } from "@/store/slices/invoice/invoiceByIdSlice";
 import { Currency } from "@/components/Currency";
+import { InvoiceData } from "@/types/invoice";
 
 export default function HomePage() {
   const { user, token, loading } = useRequireAuth();
@@ -376,6 +377,97 @@ export default function HomePage() {
     }
   }
 
+  const handleDownloadCSV = (data: InvoiceData[], fileName: string) => {
+    if (data.length === 0) {
+      toast.error("No invoices to export");
+      return;
+    }
+
+    const headers = [
+      "Invoice Number",
+      "Date",
+      "Status",
+      "From Name",
+      "From Email",
+      "From Address",
+      "From Phone",
+      "From GSTIN",
+      "From PAN",
+      "To Name",
+      "To Email",
+      "To Address",
+      "To Phone",
+      "To GSTIN",
+      "To PAN",
+      "Items Summary",
+      "Subtotal",
+      "Tax Rate (%)",
+      "Tax Amount",
+      "Discount",
+      "Total",
+      "Is Inter State",
+      "Created At",
+    ];
+
+    const rows = data.map((inv) => {
+      const itemsSummary = (inv.items || [])
+        .map(
+          (item) =>
+            `${item.quantity}x ${item.description} @ ${item.rate}`
+        )
+        .join(" | ");
+
+      return [
+        inv.invoice_number,
+        inv.date ? new Date(inv.date).toLocaleDateString() : "N/A",
+        inv.status || "N/A",
+        inv.from_name || "",
+        inv.from_email || "",
+        inv.from_address || "",
+        inv.from_phone || "",
+        inv.from_gstin || "",
+        inv.from_pan || "",
+        inv.to_name || "",
+        inv.to_email || "",
+        inv.to_address || "",
+        inv.to_phone || "",
+        inv.to_gstin || "",
+        inv.to_pan || "",
+        itemsSummary || "No Items",
+        inv.subtotal || 0,
+        inv.tax_rate || 0,
+        inv.tax_amount || 0,
+        inv.discount || 0,
+        inv.total || 0,
+        inv.is_inter_state ? "Yes" : "No",
+        inv.created_at ? new Date(inv.created_at).toLocaleString() : "N/A",
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((value) => {
+            const stringValue = String(value).replace(/"/g, '""');
+            return `"${stringValue}"`;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`${fileName} downloaded successfully`);
+  };
+
   const handleViewModeChange = (mode: "grid" | "list") => {
     setViewMode(mode);
     localStorage.setItem("invoiceViewMode", mode);
@@ -394,12 +486,46 @@ export default function HomePage() {
             View, edit, and manage all your saved invoices.
           </p>
         </div>
-        <Link href="/new" className="w-full sm:w-auto">
-          <Button className="gap-2 w-full sm:w-auto">
-            <Plus className="w-4 h-4" />
-            Create New
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2 w-full sm:w-auto">
+                <Download className="w-4 h-4" />
+                Export CSV
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px]">
+              <DropdownMenuItem
+                onClick={() => handleDownloadCSV(invoices, "all_invoices.csv")}
+                className="cursor-pointer"
+              >
+                Download All
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  handleDownloadCSV(filteredInvoices, "filtered_invoices.csv")
+                }
+                className="cursor-pointer"
+                disabled={!hasActiveFilters}
+              >
+                Download Filtered
+                {hasActiveFilters && (
+                  <Badge variant="secondary" className="ml-auto text-[10px] px-1 py-0">
+                    {filteredInvoices.length}
+                  </Badge>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Link href="/new" className="w-full sm:w-auto">
+            <Button className="gap-2 w-full sm:w-auto">
+              <Plus className="w-4 h-4" />
+              Create New
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 mb-6 sticky top-18 bg-white z-10 p-2">
